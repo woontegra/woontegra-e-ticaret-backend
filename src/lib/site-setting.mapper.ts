@@ -1,8 +1,16 @@
 import type { SiteSetting } from '@prisma/client';
 import type { SiteSettingDto } from '../types/api.js';
-import { resolveMediaUrl } from './media-url.js';
+import { resolveMediaUrlMap } from './media-url.js';
 
-export function toSiteSettingDto(setting: SiteSetting): SiteSettingDto {
+export async function toSiteSettingDto(
+  setting: SiteSetting,
+): Promise<SiteSettingDto> {
+  const urlMap = await resolveMediaUrlMap([
+    setting.logoMediaId,
+    setting.faviconMediaId,
+    setting.ogImageMediaId,
+  ]);
+
   return {
     id: setting.id,
     siteName: setting.siteName,
@@ -14,9 +22,15 @@ export function toSiteSettingDto(setting: SiteSetting): SiteSettingDto {
     logoMediaId: setting.logoMediaId,
     faviconMediaId: setting.faviconMediaId,
     ogImageMediaId: setting.ogImageMediaId,
-    logoUrl: resolveMediaUrl(setting.logoMediaId),
-    faviconUrl: resolveMediaUrl(setting.faviconMediaId),
-    ogImageUrl: resolveMediaUrl(setting.ogImageMediaId),
+    logoUrl: setting.logoMediaId
+      ? (urlMap.get(setting.logoMediaId) ?? null)
+      : null,
+    faviconUrl: setting.faviconMediaId
+      ? (urlMap.get(setting.faviconMediaId) ?? null)
+      : null,
+    ogImageUrl: setting.ogImageMediaId
+      ? (urlMap.get(setting.ogImageMediaId) ?? null)
+      : null,
     createdAt: setting.createdAt.toISOString(),
     updatedAt: setting.updatedAt.toISOString(),
   };

@@ -64,3 +64,27 @@ export interface CompanySettingDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MediaAssetDto {
+  id: string;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  url: string;
+  storageKey: string;
+  folder: string;
+  altText: string | null;
+  title: string | null;
+  usageType: string | null;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MediaListResult {
+  items: MediaAssetDto[];
+  total: number;
+}

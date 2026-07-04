@@ -5,6 +5,7 @@ import {
   companySettingsPublicRouter,
 } from '../modules/company-settings/index.js';
 import { healthRouter } from '../modules/health/index.js';
+import { mediaRouter } from '../modules/media/index.js';
 import {
   siteSettingsAdminRouter,
   siteSettingsPublicRouter,
@@ -19,5 +20,6 @@ apiRouter.use('/users', usersRouter);
 
 apiRouter.use('/admin/site-settings', siteSettingsAdminRouter);
 apiRouter.use('/admin/company-settings', companySettingsAdminRouter);
+apiRouter.use('/admin/media', mediaRouter);
 apiRouter.use('/public/site-settings', siteSettingsPublicRouter);
 apiRouter.use('/public/company-settings', companySettingsPublicRouter);

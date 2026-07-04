@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { createApp } from './app.js';
 import { env } from './config/index.js';
+import { seedDatabase } from './db/seed-data.js';
 import { prisma } from './lib/prisma.js';
 
 const app = createApp();
@@ -33,6 +34,15 @@ async function start() {
   try {
     await prisma.$connect();
     console.log('[api] Database connected');
+
+    if (env.NODE_ENV === 'production') {
+      const userCount = await prisma.user.count();
+      if (userCount === 0) {
+        console.log('[api] User table empty — seeding demo users...');
+        await seedDatabase(prisma);
+        console.log('[api] Demo users created');
+      }
+    }
   } catch (error) {
     console.warn('[api] Database unavailable — API will start, health shows disconnected');
     console.warn(error);
