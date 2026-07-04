@@ -1,4 +1,4 @@
-import { SETTINGS_SINGLETON_ID } from '@woontegra/shared';
+import { SETTINGS_SINGLETON_ID } from '../../types/api.js';
 import { prisma } from '../../lib/prisma.js';
 import { toSiteSettingDto } from '../../lib/site-setting.mapper.js';
 import type { UpdateSiteSettingInput } from './site-settings.schema.js';

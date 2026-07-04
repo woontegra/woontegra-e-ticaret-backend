@@ -1,4 +1,4 @@
-import { SETTINGS_SINGLETON_ID } from '@woontegra/shared';
+import { SETTINGS_SINGLETON_ID } from '../../types/api.js';
 import { prisma } from '../../lib/prisma.js';
 import { toCompanySettingDto } from '../../lib/company-setting.mapper.js';
 import type { UpdateCompanySettingInput } from './company-settings.schema.js';

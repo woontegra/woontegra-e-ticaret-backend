@@ -1,5 +1,5 @@
 import type { SiteSetting } from '@prisma/client';
-import type { SiteSettingDto } from '@woontegra/shared';
+import type { SiteSettingDto } from '../types/api.js';
 import { resolveMediaUrl } from './media-url.js';
 
 export function toSiteSettingDto(setting: SiteSetting): SiteSettingDto {

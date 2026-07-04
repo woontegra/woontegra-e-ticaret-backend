@@ -1,6 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import { SETTINGS_SINGLETON_ID } from '@woontegra/shared';
+import { SETTINGS_SINGLETON_ID } from '../src/types/api.js';
 
 const prisma = new PrismaClient();
 

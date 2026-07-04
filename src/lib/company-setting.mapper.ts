@@ -1,5 +1,5 @@
 import type { CompanySetting } from '@prisma/client';
-import type { CompanySettingDto, SocialLinks } from '@woontegra/shared';
+import type { CompanySettingDto, SocialLinks } from '../types/api.js';
 
 function parseSocialLinks(value: unknown): SocialLinks {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import type { ApiErrorItem, ApiResponse } from '@woontegra/shared';
+import type { ApiErrorItem, ApiResponse } from '../types/api.js';
 
 export function sendSuccess<T>(
   res: Response,

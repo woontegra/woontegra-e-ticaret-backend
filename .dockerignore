@@ -1,0 +1,22 @@
+# Dependencies only — Railway apps/api standalone deploy
+node_modules/
+
+# Build
+dist/
+
+# Env
+.env
+.env.*
+
+# Uploads
+storage/uploads/*
+!storage/uploads/.gitkeep
+
+# Logs
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
