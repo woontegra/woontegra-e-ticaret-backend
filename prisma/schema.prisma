@@ -1,0 +1,124 @@
+// Woontegra Commerce — Prisma schema
+// Site ve firma ayarları tek site modeli; tenant kullanılmaz.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  OWNER
+  ADMIN
+  STAFF
+}
+
+model SiteSetting {
+  id                   String   @id @default("default")
+  siteName             String   @default("")
+  siteDescription      String   @default("")
+  defaultSeoTitle      String   @default("")
+  defaultSeoDescription String  @default("")
+  domain               String   @default("")
+  maintenanceMode      Boolean  @default(false)
+  logoMediaId          String?
+  faviconMediaId       String?
+  ogImageMediaId       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model CompanySetting {
+  id             String   @id @default("default")
+  companyName    String   @default("")
+  tradeName      String   @default("")
+  taxNumber      String   @default("")
+  taxOffice      String   @default("")
+  mersisNumber   String?
+  address        String   @default("")
+  city           String   @default("")
+  district       String   @default("")
+  phone          String   @default("")
+  whatsapp       String   @default("")
+  email          String   @default("")
+  supportEmail   String   @default("")
+  workingHours   String   @default("")
+  currency       String   @default("TRY")
+  defaultTaxRate Decimal  @default(20) @db.Decimal(5, 2)
+  socialLinks    Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  settings  Setting[]
+  auditLogs AuditLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  role         UserRole
+  tenantId     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant    Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  auditLogs AuditLog[]
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([username])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  tenantId  String
+  key       String
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
