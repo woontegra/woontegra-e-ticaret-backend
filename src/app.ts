@@ -18,6 +18,15 @@ export function createApp(): Express {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Railway / load balancer probe fallback
+  app.get('/', (_req, res) => {
+    res.status(200).json({ status: 'ok', service: 'woontegra-commerce-api' });
+  });
+
+  app.get('/health', (_req, res) => {
+    res.redirect(307, '/api/health');
+  });
+
   app.use('/api', apiRouter);
 
   app.use(errorHandler);
