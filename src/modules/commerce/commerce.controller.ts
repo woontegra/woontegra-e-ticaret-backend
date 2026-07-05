@@ -60,7 +60,7 @@ export { applyCartCoupon, removeCartCoupon };
 export async function checkout(req: Request, res: Response) {
   const sessionId = resolveCartSessionId(req, res);
   const input = checkoutSchema.parse(req.body);
-  const data = await checkoutService.checkout(sessionId, input);
+  const data = await checkoutService.checkout(sessionId, input, req.customer?.id);
   sendCreated(res, data);
 }
 
@@ -76,6 +76,15 @@ export async function getPublicOrder(req: Request, res: Response) {
 export async function getPublicOrderDownloads(req: Request, res: Response) {
   const query = publicOrderQuerySchema.parse(req.query);
   const data = await checkoutService.getPublicOrderDownloads(
+    req.params.orderNumber,
+    query.email,
+  );
+  sendSuccess(res, data);
+}
+
+export async function getPublicOrderSaasMemberships(req: Request, res: Response) {
+  const query = publicOrderQuerySchema.parse(req.query);
+  const data = await checkoutService.getPublicOrderSaasMembershipsByNumber(
     req.params.orderNumber,
     query.email,
   );
@@ -146,5 +155,21 @@ export async function updateOrderShipment(req: Request, res: Response) {
 
 export async function retryOrderDigitalDelivery(req: Request, res: Response) {
   const data = await orderService.retryOrderDigitalDelivery(req.params.id);
+  sendSuccess(res, data);
+}
+
+export async function retryOrderItemLicense(req: Request, res: Response) {
+  const data = await orderService.retryOrderItemLicense(
+    req.params.orderId,
+    req.params.orderItemId,
+  );
+  sendSuccess(res, data);
+}
+
+export async function retryOrderItemSaasProvision(req: Request, res: Response) {
+  const data = await orderService.retryOrderItemSaasProvision(
+    req.params.orderId,
+    req.params.orderItemId,
+  );
   sendSuccess(res, data);
 }

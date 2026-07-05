@@ -9,6 +9,13 @@ declare global {
         name: string;
         role: UserRole;
       };
+      customer?: {
+        id: string;
+        email: string;
+        name: string;
+        phone: string | null;
+        isActive: boolean;
+      };
     }
   }
 }

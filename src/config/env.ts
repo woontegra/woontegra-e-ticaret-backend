@@ -68,6 +68,43 @@ const envSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
   DOWNLOAD_TOKEN_DAYS: z.coerce.number().int().positive().default(90),
+  LICENSE_SERVER_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  LICENSE_SERVER_INTEGRATION_SECRET: z
+    .string()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  LICENSE_SERVER_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  LICENSE_SERVER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  MUVEKKIL_KASA_SAAS_API_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  MUVEKKIL_KASA_SAAS_PROVISION_SECRET: z
+    .string()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  MUVEKKIL_KASA_SAAS_APP_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  MUVEKKIL_KASA_SAAS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  MUVEKKIL_KASA_SAAS_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
+  SAAS_PROVISIONING_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
   STORAGE_PUBLIC_BASE_URL: z
     .string()
     .url()

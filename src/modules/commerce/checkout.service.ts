@@ -22,8 +22,10 @@ import type {
 import {
   buildFulfillmentMessages,
   collectDeliveryModes,
+  assertSaasCheckoutAllowed,
 } from '../../lib/cart-product-rules.js';
 import { getPublicOrderDownloadLinks } from './digitalDelivery.service.js';
+import { getPublicOrderSaasMemberships } from '../saas/saas-fulfillment.service.js';
 import { getCartRecordBySession } from './cart.service.js';
 import type { CheckoutInput } from './checkout.schema.js';
 import { sendOrderCreatedEmail, sendBankTransferWaitingEmail, buildBankTransferInfo } from '../mail/mail-order.service.js';
@@ -49,6 +51,7 @@ async function generateOrderNumber(): Promise<string> {
 export async function checkout(
   sessionId: string,
   input: CheckoutInput,
+  storeCustomerId?: string | null,
 ): Promise<CheckoutResultDto> {
   const paymentMethod = await validatePaymentMethodForCheckout(
     input.paymentMethodId,
@@ -79,6 +82,11 @@ export async function checkout(
   if (!cartWithItems || cartWithItems.items.length === 0) {
     throw AppError.badRequest('Cart is empty');
   }
+
+  assertSaasCheckoutAllowed(
+    cartWithItems.items.map((item) => item.product),
+    storeCustomerId,
+  );
 
   let subtotal = 0;
   let taxTotal = 0;
@@ -121,6 +129,7 @@ export async function checkout(
     const created = await tx.order.create({
       data: {
         orderNumber,
+        customerId: storeCustomerId ?? null,
         status: OrderStatus.PENDING,
         paymentStatus,
         paymentMethodId: paymentMethod.id,
@@ -282,6 +291,11 @@ export async function getPublicOrderByNumber(
       ? await getPublicOrderDownloadLinks(orderNumber, customerEmail)
       : [];
 
+  const saasMemberships =
+    order.paymentStatus === PaymentStatus.PAID
+      ? await getPublicOrderSaasMemberships(orderNumber, customerEmail)
+      : [];
+
   return {
     ...publicOrder,
     fulfillment: {
@@ -292,8 +306,17 @@ export async function getPublicOrderByNumber(
         order.paymentStatus,
       ),
       downloadLinks,
+      saasMemberships,
     },
   };
+}
+
+export async function getPublicOrderSaasMembershipsByNumber(
+  orderNumber: string,
+  customerEmail: string,
+) {
+  const memberships = await getPublicOrderSaasMemberships(orderNumber, customerEmail);
+  return { memberships };
 }
 
 export async function getPublicOrderDownloads(

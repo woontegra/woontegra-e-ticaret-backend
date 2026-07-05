@@ -48,8 +48,13 @@ export function buildFulfillmentMessages(
 
   if (paymentMethodType === 'BANK_TRANSFER') {
     messages.push(
-      'Havale/EFT ödemeniz onaylandıktan sonra indirme bağlantıları e-posta ile gönderilecektir.',
+      'Havale/EFT ödemeniz onaylandıktan sonra dijital teslimat başlatılacaktır.',
     );
+    if (deliveryModes.includes('SAAS')) {
+      messages.push(
+        'Ödemeniz onaylandıktan sonra SaaS hesabınız oluşturulacaktır.',
+      );
+    }
   }
 
   if (deliveryModes.includes('PAID_DOWNLOAD')) {
@@ -78,4 +83,24 @@ export function buildFulfillmentMessages(
   }
 
   return [...new Set(messages)];
+}
+
+export function cartRequiresCustomerLogin(
+  products: Array<{ deliveryMode: DeliveryMode; saasRequiresLogin: boolean }>,
+): boolean {
+  return products.some(
+    (product) =>
+      product.deliveryMode === 'SAAS' && product.saasRequiresLogin,
+  );
+}
+
+export function assertSaasCheckoutAllowed(
+  products: Array<{ deliveryMode: DeliveryMode; saasRequiresLogin: boolean }>,
+  customerId?: string | null,
+): void {
+  if (cartRequiresCustomerLogin(products) && !customerId) {
+    throw AppError.unauthorized(
+      'SaaS aboneliği satın almak için hesabınıza giriş yapmanız gerekir.',
+    );
+  }
 }

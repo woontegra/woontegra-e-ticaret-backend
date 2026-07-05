@@ -98,11 +98,15 @@ import {
 } from '../modules/reports/index.js';
 import { usersRouter } from '../modules/users/index.js';
 import { downloadsRouter } from '../modules/downloads/index.js';
+import { customerAuthRouter } from '../modules/customer-auth/index.js';
+import { licenseAdminRouter } from '../modules/license/index.js';
+import { saasAdminRouter } from '../modules/saas/index.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
+apiRouter.use('/public/customer-auth', customerAuthRouter);
 apiRouter.use('/users', requireAuth, usersRouter);
 
 apiRouter.use('/admin', requireAuth);
@@ -128,6 +132,8 @@ apiRouter.use('/admin/brands', brandsAdminRouter);
 apiRouter.use('/admin/product-attributes', productAttributesAdminRouter);
 apiRouter.use('/admin/products', productsAdminRouter);
 apiRouter.use('/admin/orders', ordersAdminRouter);
+apiRouter.use('/admin', licenseAdminRouter);
+apiRouter.use('/admin', saasAdminRouter);
 apiRouter.use('/admin/shipping-carriers', shippingCarriersAdminRouter);
 apiRouter.use('/admin/shipping-methods', shippingMethodsAdminRouter);
 apiRouter.use('/admin/payment-methods', paymentMethodsAdminRouter);

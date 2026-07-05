@@ -7,13 +7,21 @@ import {
 import { AppError } from '../../lib/app-error.js';
 import { toOrderDto, toOrderSummaryDto } from '../../lib/order.mapper.js';
 import { prisma } from '../../lib/prisma.js';
-import { sendPaymentReceivedEmail } from '../mail/mail-order.service.js';
+import { sendOrderDigitalDeliveryEmail, sendPaymentReceivedEmail, sendSaasProvisionReadyEmail } from '../mail/mail-order.service.js';
 import { maybeNotifyPaymentWaiting } from '../notifications/notification.service.js';
 import {
   getAdminOrderDigitalDelivery,
   onOrderPaymentCompleted,
   retryDigitalDeliveryForOrder,
 } from './digitalDelivery.service.js';
+import {
+  getAdminOrderLicenseDelivery,
+  retryLicenseForOrderItem,
+} from '../license/license-fulfillment.service.js';
+import {
+  getAdminOrderSaasDelivery,
+  retrySaasProvisionForOrderItem,
+} from '../saas/saas-fulfillment.service.js';
 import type { ListOrdersQuery } from './order.schema.js';
 
 function parseDateStart(value: string): Date {
@@ -85,8 +93,12 @@ async function loadOrderDto(id: string) {
   });
   if (!order) throw AppError.notFound('Order not found');
   const dto = toOrderDto(order);
-  const digitalDelivery = await getAdminOrderDigitalDelivery(id);
-  return { ...dto, digitalDelivery };
+  const [digitalDelivery, licenseDelivery, saasDelivery] = await Promise.all([
+    getAdminOrderDigitalDelivery(id),
+    getAdminOrderLicenseDelivery(id),
+    getAdminOrderSaasDelivery(id),
+  ]);
+  return { ...dto, digitalDelivery, licenseDelivery, saasDelivery };
 }
 
 export async function listOrders(query: ListOrdersQuery) {
@@ -176,6 +188,52 @@ export async function retryOrderDigitalDelivery(id: string) {
   await ensureOrder(id);
   await retryDigitalDeliveryForOrder(id);
   return loadOrderDto(id);
+}
+
+export async function retryOrderItemLicense(orderId: string, orderItemId: string) {
+  const order = await ensureOrder(orderId);
+  if (order.paymentStatus !== PaymentStatus.PAID) {
+    throw AppError.badRequest('Ödeme tamamlanmadan lisans oluşturulmaz');
+  }
+
+  const item = await prisma.orderItem.findFirst({
+    where: { id: orderItemId, orderId },
+  });
+  if (!item) throw AppError.notFound('Order item not found');
+
+  const result = await retryLicenseForOrderItem(orderItemId);
+  if (result.created) {
+    void sendOrderDigitalDeliveryEmail(orderId, {
+      createdLinks: [],
+      licensesCreated: true,
+    }).catch((error) => {
+      console.error('[mail] license retry delivery failed', error);
+    });
+  }
+  return loadOrderDto(orderId);
+}
+
+export async function retryOrderItemSaasProvision(
+  orderId: string,
+  orderItemId: string,
+) {
+  const order = await ensureOrder(orderId);
+  if (order.paymentStatus !== PaymentStatus.PAID) {
+    throw AppError.badRequest('Ödeme tamamlanmadan SaaS hesabı oluşturulmaz');
+  }
+
+  const item = await prisma.orderItem.findFirst({
+    where: { id: orderItemId, orderId },
+  });
+  if (!item) throw AppError.notFound('Order item not found');
+
+  const result = await retrySaasProvisionForOrderItem(orderItemId);
+  if (result.created && !result.mailSentBySaas) {
+    void sendSaasProvisionReadyEmail(orderId).catch((error) => {
+      console.error('[mail] SAAS retry delivery failed', error);
+    });
+  }
+  return loadOrderDto(orderId);
 }
 
 export async function updateOrderShippingStatus(

@@ -164,18 +164,26 @@ async function getSupportEmail(): Promise<string> {
   return company?.supportEmail?.trim() || company?.email?.trim() || 'destek@woontegra.com';
 }
 
-export async function sendDigitalDownloadReadyEmail(
+export async function sendOrderDigitalDeliveryEmail(
   orderId: string,
-  links: CreatedDownloadLink[],
+  context: {
+    createdLinks: CreatedDownloadLink[];
+    licensesCreated: boolean;
+  },
 ): Promise<void> {
-  if (!links.length) return;
-
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       items: {
         include: {
-          product: { select: { deliveryMode: true, name: true } },
+          product: {
+            select: {
+              deliveryMode: true,
+              name: true,
+              licenseAppCode: true,
+              licenseMaxDevices: true,
+            },
+          },
         },
       },
     },
@@ -183,20 +191,86 @@ export async function sendDigitalDownloadReadyEmail(
 
   if (!order) return;
 
+  const hasDigitalItems = order.items.some(
+    (item) =>
+      item.product?.deliveryMode === 'PAID_DOWNLOAD' ||
+      item.product?.deliveryMode === 'LICENSED_DOWNLOAD',
+  );
+
+  if (!hasDigitalItems) return;
+
+  if (!context.createdLinks.length && !context.licensesCreated) {
+    return;
+  }
+
   const siteName = await getSiteName();
   const supportEmail = await getSupportEmail();
-  const productNames = [...new Set(links.map((link) => link.productName))];
+  const links = context.createdLinks;
+  const productNames = [
+    ...new Set(
+      order.items
+        .filter(
+          (item) =>
+            item.product?.deliveryMode === 'PAID_DOWNLOAD' ||
+            item.product?.deliveryMode === 'LICENSED_DOWNLOAD',
+        )
+        .map((item) => item.nameSnapshot),
+    ),
+  ];
   const expiresAt = links[0]?.expiresAt
     ? new Date(links[0].expiresAt).toLocaleDateString('tr-TR')
     : '';
 
-  const hasLicensed = order.items.some(
+  const licensedItems = order.items.filter(
     (item) => item.product?.deliveryMode === 'LICENSED_DOWNLOAD',
   );
 
-  const licenseNote = hasLicensed
-    ? 'Lisans bilgileriniz ayrıca gönderilecektir. Bu e-postada yalnızca kurulum dosyası bağlantıları yer almaktadır.'
+  const primaryLicensed = licensedItems[0];
+  const licenseCreated =
+    primaryLicensed?.licenseServerStatus === 'CREATED' &&
+    Boolean(primaryLicensed.licenseServerLicenseKey);
+
+  const licenseKey = licenseCreated
+    ? (primaryLicensed?.licenseServerLicenseKey ?? '')
     : '';
+  const activationPassword = licenseCreated
+    ? (primaryLicensed?.licenseServerActivationPassword ?? '')
+    : '';
+  const licenseExpiresAt = primaryLicensed?.licenseServerExpiresAt
+    ? primaryLicensed.licenseServerExpiresAt.toLocaleDateString('tr-TR')
+    : '';
+  const licenseMaxDevices = primaryLicensed?.product?.licenseMaxDevices
+    ? String(primaryLicensed.product.licenseMaxDevices)
+    : '';
+  const licenseAppCode = primaryLicensed?.product?.licenseAppCode ?? '';
+
+  const licenseNote = licensedItems.length
+    ? licenseCreated
+      ? ''
+      : 'Lisans bilgileriniz hazırlanıyor. Kısa süre içinde ayrıca bilgilendirileceksiniz.'
+    : '';
+
+  const licenseInfoHtml = licenseCreated
+    ? `<div style="margin:16px 0;padding:12px;border:1px solid #e2e8f0;border-radius:8px;">
+<p><strong>Lisans anahtarı:</strong> ${licenseKey}</p>
+<p><strong>Aktivasyon şifresi:</strong> ${activationPassword || '—'}</p>
+<p><strong>Bitiş tarihi:</strong> ${licenseExpiresAt || '—'}</p>
+<p><strong>Maksimum cihaz:</strong> ${licenseMaxDevices || '—'}</p>
+<p><strong>Uygulama kodu:</strong> ${licenseAppCode || '—'}</p>
+</div>`
+    : licensedItems.length
+      ? `<p style="color:#64748b;">${licenseNote}</p>`
+      : '';
+
+  const licenseInfoText = licenseCreated
+    ? [
+        `Lisans anahtarı: ${licenseKey}`,
+        `Aktivasyon şifresi: ${activationPassword || '—'}`,
+        `Bitiş tarihi: ${licenseExpiresAt || '—'}`,
+        `Maksimum cihaz: ${licenseMaxDevices || '—'}`,
+        `Uygulama kodu: ${licenseAppCode || '—'}`,
+      ].join('\n')
+    : licenseNote;
 
   const variables = {
     customerName: order.customerName,
@@ -208,6 +282,13 @@ export async function sendDigitalDownloadReadyEmail(
     expiresAt,
     supportEmail,
     licenseNote,
+    licenseKey,
+    activationPassword,
+    licenseExpiresAt,
+    licenseMaxDevices,
+    licenseAppCode,
+    licenseInfoHtml,
+    licenseInfoText,
     siteName,
   };
 
@@ -246,4 +327,53 @@ export async function sendDigitalDownloadReadyEmail(
     });
     throw error;
   }
+}
+
+/** @deprecated use sendOrderDigitalDeliveryEmail */
+export async function sendDigitalDownloadReadyEmail(
+  orderId: string,
+  links: CreatedDownloadLink[],
+): Promise<void> {
+  return sendOrderDigitalDeliveryEmail(orderId, {
+    createdLinks: links,
+    licensesCreated: false,
+  });
+}
+
+export async function sendSaasProvisionReadyEmail(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      saasMemberships: {
+        include: { product: { select: { name: true } } },
+      },
+    },
+  });
+
+  if (!order?.saasMemberships.length) return;
+
+  const siteName = await getSiteName();
+  const supportEmail = await getSupportEmail();
+  const membership = order.saasMemberships[0]!;
+
+  const variables = {
+    customerName: order.customerName,
+    orderNumber: order.orderNumber,
+    productName: membership.product.name,
+    loginUrl: membership.loginUrl ?? '',
+    loginEmail: membership.loginEmail ?? order.customerEmail,
+    temporaryPassword: membership.temporaryPassword ?? '',
+    tenantSlug: membership.externalTenantSlug ?? '',
+    licenseKey: membership.externalLicenseKey ?? '',
+    startsAt: membership.startsAt
+      ? membership.startsAt.toLocaleDateString('tr-TR')
+      : '',
+    endsAt: membership.endsAt
+      ? membership.endsAt.toLocaleDateString('tr-TR')
+      : '',
+    supportEmail,
+    siteName,
+  };
+
+  await sendTemplateMail('SAAS_PROVISION_READY', order.customerEmail, variables);
 }

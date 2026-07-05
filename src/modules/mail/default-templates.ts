@@ -179,16 +179,17 @@ export const DEFAULT_MAIL_TEMPLATES: DefaultMailTemplate[] = [
     subject: 'Woontegra Kurulum Dosyalarınız Hazır',
     htmlContent: `<div style="${baseStyle}">
 <p>Merhaba {{customerName}},</p>
-<p><strong>{{orderNumber}}</strong> numaralı siparişiniz için indirme bağlantılarınız hazır.</p>
+<p><strong>{{orderNumber}}</strong> numaralı siparişiniz için dijital teslimat bilgileriniz hazır.</p>
 <p>Ürün: <strong>{{productName}}</strong></p>
 {{downloadLinksHtml}}
 <p>Bağlantılar <strong>{{expiresAt}}</strong> tarihine kadar geçerlidir.</p>
+{{licenseInfoHtml}}
 <p>{{licenseNote}}</p>
 <p>Sorularınız için: <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
 <p>Teşekkür ederiz,<br>{{siteName}}</p>
 </div>`,
     textContent:
-      'Merhaba {{customerName}},\n\n{{orderNumber}} siparişiniz için indirme bağlantılarınız hazır.\n\nÜrün: {{productName}}\n\n{{downloadLinksText}}\n\nBağlantılar {{expiresAt}} tarihine kadar geçerlidir.\n\n{{licenseNote}}\n\nDestek: {{supportEmail}}\n\n{{siteName}}',
+      'Merhaba {{customerName}},\n\n{{orderNumber}} siparişiniz için dijital teslimat bilgileriniz hazır.\n\nÜrün: {{productName}}\n\n{{downloadLinksText}}\n\nBağlantılar {{expiresAt}} tarihine kadar geçerlidir.\n\n{{licenseInfoText}}\n\n{{licenseNote}}\n\nDestek: {{supportEmail}}\n\n{{siteName}}',
     variables: [
       { name: 'customerName', description: 'Müşteri adı' },
       { name: 'orderNumber', description: 'Sipariş numarası' },
@@ -199,6 +200,46 @@ export const DEFAULT_MAIL_TEMPLATES: DefaultMailTemplate[] = [
       { name: 'expiresAt', description: 'Link geçerlilik tarihi' },
       { name: 'supportEmail', description: 'Destek e-postası' },
       { name: 'licenseNote', description: 'Lisans notu' },
+      { name: 'licenseKey', description: 'Lisans anahtarı' },
+      { name: 'activationPassword', description: 'Aktivasyon şifresi' },
+      { name: 'licenseExpiresAt', description: 'Lisans bitiş tarihi' },
+      { name: 'licenseMaxDevices', description: 'Maksimum cihaz sayısı' },
+      { name: 'licenseAppCode', description: 'Uygulama kodu' },
+      { name: 'licenseInfoHtml', description: 'Lisans bilgileri HTML' },
+      { name: 'licenseInfoText', description: 'Lisans bilgileri düz metin' },
+      { name: 'siteName', description: 'Site adı' },
+    ],
+  },
+  {
+    key: 'SAAS_PROVISION_READY',
+    name: 'SaaS hesabı hazır',
+    subject: 'Woontegra SaaS Hesabınız Hazır',
+    htmlContent: `<div style="${baseStyle}">
+<p>Merhaba {{customerName}},</p>
+<p><strong>{{orderNumber}}</strong> numaralı siparişiniz için SaaS hesabınız hazır.</p>
+<p>Ürün: <strong>{{productName}}</strong></p>
+<p><strong>Giriş URL:</strong> <a href="{{loginUrl}}">{{loginUrl}}</a></p>
+<p><strong>E-posta:</strong> {{loginEmail}}</p>
+<p><strong>Geçici şifre:</strong> {{temporaryPassword}}</p>
+<p><strong>Ofis/tenant:</strong> {{tenantSlug}}</p>
+<p><strong>Abonelik:</strong> {{startsAt}} — {{endsAt}}</p>
+<p>Sorularınız için: <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+<p>Teşekkür ederiz,<br>{{siteName}}</p>
+</div>`,
+    textContent:
+      'Merhaba {{customerName}},\n\n{{orderNumber}} siparişiniz için SaaS hesabınız hazır.\n\nÜrün: {{productName}}\nGiriş: {{loginUrl}}\nE-posta: {{loginEmail}}\nGeçici şifre: {{temporaryPassword}}\nOfis: {{tenantSlug}}\nAbonelik: {{startsAt}} — {{endsAt}}\n\nDestek: {{supportEmail}}\n\n{{siteName}}',
+    variables: [
+      { name: 'customerName', description: 'Müşteri adı' },
+      { name: 'orderNumber', description: 'Sipariş numarası' },
+      { name: 'productName', description: 'Ürün adı' },
+      { name: 'loginUrl', description: 'Giriş URL' },
+      { name: 'loginEmail', description: 'Giriş e-postası' },
+      { name: 'temporaryPassword', description: 'Geçici şifre' },
+      { name: 'tenantSlug', description: 'Tenant slug' },
+      { name: 'licenseKey', description: 'Lisans anahtarı' },
+      { name: 'startsAt', description: 'Başlangıç tarihi' },
+      { name: 'endsAt', description: 'Bitiş tarihi' },
+      { name: 'supportEmail', description: 'Destek e-postası' },
       { name: 'siteName', description: 'Site adı' },
     ],
   },

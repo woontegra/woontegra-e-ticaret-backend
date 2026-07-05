@@ -1155,6 +1155,7 @@ export interface OrderFulfillmentDto {
   deliveryModes: DeliveryMode[];
   messages: string[];
   downloadLinks?: PublicDownloadLinkDto[];
+  saasMemberships?: PublicSaasMembershipDto[];
 }
 
 export interface PublicDownloadLinkDto {
@@ -1183,6 +1184,101 @@ export type OrderItemDeliveryStatus =
   | 'READY'
   | 'SENT'
   | 'FAILED';
+
+export type LicenseServerStatus =
+  | 'PENDING'
+  | 'CREATED'
+  | 'FAILED'
+  | 'SKIPPED';
+
+export interface OrderLicenseDeliveryItemDto {
+  orderItemId: string;
+  productName: string;
+  licenseAppCode: string | null;
+  licenseServerStatus: LicenseServerStatus | null;
+  licenseServerLicenseKey: string | null;
+  licenseServerActivationPassword: string | null;
+  licenseServerExpiresAt: string | null;
+  licenseServerLastError: string | null;
+  licenseServerUnitsNotified: number;
+  quantity: number;
+  canRetry: boolean;
+  canFulfill: boolean;
+}
+
+export type SaasProvisionStatus = 'PENDING' | 'CREATED' | 'FAILED' | 'SKIPPED';
+
+export type SaasMembershipStatus =
+  | 'PENDING'
+  | 'ACTIVE'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export interface OrderSaasDeliveryItemDto {
+  orderItemId: string;
+  productName: string;
+  saasAppCode: string | null;
+  saasPlanCode: string | null;
+  saasProvisionStatus: SaasProvisionStatus | null;
+  saasProvisionLastError: string | null;
+  saasProvisionedAt: string | null;
+  externalTenantId: string | null;
+  externalTenantSlug: string | null;
+  loginUrl: string | null;
+  loginEmail: string | null;
+  temporaryPassword: string | null;
+  externalLicenseKey: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  canRetry: boolean;
+  canFulfill: boolean;
+}
+
+export interface PublicSaasMembershipDto {
+  productName: string;
+  saasAppCode: string;
+  loginUrl: string | null;
+  loginEmail: string | null;
+  tenantSlug: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  note?: string;
+}
+
+export interface SaasMembershipListItemDto {
+  id: string;
+  customerEmail: string | null;
+  customerName: string | null;
+  productName: string;
+  saasAppCode: string;
+  saasPlanCode: string | null;
+  tenantSlug: string | null;
+  status: SaasMembershipStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  orderNumber: string | null;
+  loginUrl: string | null;
+  lastError: string | null;
+  createdAt: string;
+}
+
+export interface SaasMembershipListResult {
+  items: SaasMembershipListItemDto[];
+  total: number;
+}
+
+export interface StoreCustomerDto {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+}
+
+export interface CustomerAuthResultDto {
+  accessToken: string;
+  customer: StoreCustomerDto;
+}
 
 export interface CheckoutResultDto {
   order: PublicOrderDto;
@@ -1260,6 +1356,7 @@ export interface CartDto {
   discountTotal: number;
   couponCode: string | null;
   grandTotal: number;
+  requiresCustomerLogin?: boolean;
 }
 
 export interface CartSummaryDto {
@@ -1305,6 +1402,8 @@ export interface OrderDto {
   createdAt: string;
   updatedAt: string;
   digitalDelivery?: OrderDigitalDeliveryItemDto[];
+  licenseDelivery?: OrderLicenseDeliveryItemDto[];
+  saasDelivery?: OrderSaasDeliveryItemDto[];
 }
 
 export type PublicOrderDto = Omit<OrderDto, 'adminNote'> & {

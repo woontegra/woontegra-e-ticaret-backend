@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { optionalCustomerAuth } from '../../middlewares/customer-auth.middleware.js';
 import { publicWriteRateLimiter } from '../../middlewares/rate-limit.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as commerceController from './commerce.controller.js';
@@ -31,7 +32,13 @@ cartPublicRouter.delete(
 checkoutPublicRouter.post(
   '/',
   publicWriteRateLimiter,
+  optionalCustomerAuth,
   asyncHandler(commerceController.checkout),
+);
+
+ordersPublicRouter.get(
+  '/:orderNumber/saas-memberships',
+  asyncHandler(commerceController.getPublicOrderSaasMemberships),
 );
 
 ordersPublicRouter.get(
@@ -75,5 +82,13 @@ ordersAdminRouter.patch(
 ordersAdminRouter.post(
   '/:id/retry-digital-delivery',
   asyncHandler(commerceController.retryOrderDigitalDelivery),
+);
+ordersAdminRouter.post(
+  '/:orderId/items/:orderItemId/retry-license',
+  asyncHandler(commerceController.retryOrderItemLicense),
+);
+ordersAdminRouter.post(
+  '/:orderId/items/:orderItemId/retry-saas-provision',
+  asyncHandler(commerceController.retryOrderItemSaasProvision),
 );
 ordersAdminRouter.get('/:id', asyncHandler(commerceController.getOrder));

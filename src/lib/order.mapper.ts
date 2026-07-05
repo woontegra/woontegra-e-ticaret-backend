@@ -21,6 +21,7 @@ import type {
 } from '../types/api.js';
 import { resolveMediaUrlMap } from './media-url.js';
 import { toShipmentDto } from './shipping.mapper.js';
+import { cartRequiresCustomerLogin } from './cart-product-rules.js';
 
 function decimalToNumber(value: Prisma.Decimal | null | undefined): number | null {
   if (value === null || value === undefined) return null;
@@ -105,6 +106,9 @@ export async function toCartDto(
     couponCode: cart.couponCode ?? null,
     grandTotal: roundMoney(
       subtotal + taxTotal - Number(cart.discountTotal ?? 0),
+    ),
+    requiresCustomerLogin: cartRequiresCustomerLogin(
+      cart.items.map((item) => item.product),
     ),
   };
 }

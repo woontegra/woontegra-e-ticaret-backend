@@ -23,8 +23,10 @@ import {
 } from '../../lib/product-download-files.js';
 import { streamMediaAssetDownload } from '../../lib/storage/download-stream.js';
 import { prisma } from '../../lib/prisma.js';
-import { sendDigitalDownloadReadyEmail } from '../mail/mail-order.service.js';
+import { sendOrderDigitalDeliveryEmail, sendSaasProvisionReadyEmail } from '../mail/mail-order.service.js';
 import type { PublicDownloadLinkDto } from '../../types/api.js';
+import { fulfillLicensesForPaidOrder } from '../license/license-fulfillment.service.js';
+import { fulfillSaasForPaidOrder } from '../saas/saas-fulfillment.service.js';
 
 const PAID_DELIVERY_MODES: DeliveryMode[] = [
   DeliveryModeEnum.PAID_DOWNLOAD,
@@ -465,13 +467,16 @@ export async function fulfillDigitalDownloadsForPaidOrder(
     if (!itemReady) anyFailed = true;
   }
 
-  const shouldSendEmail = options?.sendEmail !== false && createdLinks.length > 0;
+  const shouldSendEmail = options?.sendEmail === true && createdLinks.length > 0;
 
   if (shouldSendEmail) {
-    void sendDigitalDownloadReadyEmail(orderId, createdLinks).catch((error) => {
+    void sendOrderDigitalDeliveryEmail(orderId, {
+      createdLinks,
+      licensesCreated: false,
+    }).catch((error) => {
       console.error('[mail] DIGITAL_DOWNLOAD_READY failed', error);
     });
-  } else if (anyReady && createdLinks.length === 0) {
+  } else if (anyReady && createdLinks.length === 0 && options?.sendEmail === true) {
     await prisma.orderItem.updateMany({
       where: {
         orderId,
@@ -621,5 +626,27 @@ export function buildPublicFreeDownloadPath(
 }
 
 export async function onOrderPaymentCompleted(orderId: string) {
-  return fulfillDigitalDownloadsForPaidOrder(orderId);
+  const downloadResult = await fulfillDigitalDownloadsForPaidOrder(orderId, {
+    sendEmail: false,
+  });
+
+  const licenseResult = await fulfillLicensesForPaidOrder(orderId);
+  const saasResult = await fulfillSaasForPaidOrder(orderId);
+
+  if (downloadResult.createdLinks.length > 0 || licenseResult.createdCount > 0) {
+    void sendOrderDigitalDeliveryEmail(orderId, {
+      createdLinks: downloadResult.createdLinks,
+      licensesCreated: licenseResult.createdCount > 0,
+    }).catch((error) => {
+      console.error('[mail] order digital delivery failed', error);
+    });
+  }
+
+  if (saasResult.provisionedCount > 0 && !saasResult.mailSentBySaas) {
+    void sendSaasProvisionReadyEmail(orderId).catch((error) => {
+      console.error('[mail] SAAS_PROVISION_READY failed', error);
+    });
+  }
+
+  return { downloadResult, licenseResult, saasResult };
 }

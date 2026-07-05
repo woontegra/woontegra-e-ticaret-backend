@@ -167,6 +167,28 @@ enum OrderItemDeliveryStatus {
   FAILED
 }
 
+enum LicenseServerStatus {
+  PENDING
+  CREATED
+  FAILED
+  SKIPPED
+}
+
+enum SaasMembershipStatus {
+  PENDING
+  ACTIVE
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum SaasProvisionStatus {
+  PENDING
+  CREATED
+  FAILED
+  SKIPPED
+}
+
 enum MailLogStatus {
   PENDING
   SENT
@@ -589,6 +611,7 @@ model Product {
   downloadTokens       DownloadToken[]
   downloadLogs         DownloadLog[]
   downloadStats        DownloadStat[]
+  saasMemberships      CustomerSaasMembership[]
 
   @@index([status])
   @@index([categoryId])
@@ -762,6 +785,8 @@ model Order {
   coupon          Coupon?         @relation(fields: [couponId], references: [id], onDelete: SetNull)
   downloadTokens  DownloadToken[]
   downloadLogs    DownloadLog[]
+  storeCustomer   StoreCustomer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  saasMemberships CustomerSaasMembership[]
 
   @@index([customerId])
   @@index([status])
@@ -866,14 +891,81 @@ model OrderItem {
   downloadEmailSentAt    DateTime?
   deliveryStatus         OrderItemDeliveryStatus?
   deliveryError          String?
+  licenseServerUnitsNotified      Int                  @default(0)
+  licenseServerLicenseKey         String?
+  licenseServerActivationPassword String?
+  licenseServerExpiresAt          DateTime?
+  licenseServerLastError          String?
+  licenseServerStatus             LicenseServerStatus?
+  saasMembershipId                String?
+  saasProvisionStatus             SaasProvisionStatus?
+  saasProvisionLastError          String?
+  saasProvisionedAt               DateTime?
+  saasRenewalDays                 Int?
 
   order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product         Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
   variant         ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: SetNull)
   downloadTokens  DownloadToken[]
+  saasMembership  CustomerSaasMembership? @relation(fields: [saasMembershipId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
+  @@index([saasMembershipId])
+}
+
+model StoreCustomer {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders           Order[]
+  saasMemberships  CustomerSaasMembership[]
+
+  @@index([email])
+}
+
+model CustomerSaasMembership {
+  id                   String               @id @default(cuid())
+  customerId           String?
+  orderId              String?
+  orderItemId          String?
+  productId            String
+  saasAppCode          String
+  saasPlanCode         String?
+  externalTenantId     String?
+  externalTenantSlug   String?
+  externalLicenseKey   String?
+  loginEmail           String?
+  loginUrl             String?
+  temporaryPassword    String?
+  status               SaasMembershipStatus @default(PENDING)
+  startsAt             DateTime?
+  endsAt               DateTime?
+  provisionedAt        DateTime?
+  lastError            String?
+  rawResponse          Json?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  customer  StoreCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  order     Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([customerId])
+  @@index([orderId])
+  @@index([orderItemId])
+  @@index([productId])
+  @@index([saasAppCode])
+  @@index([status])
+  @@index([externalTenantSlug])
 }
 
 model DownloadToken {
