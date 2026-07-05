@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { sendCreated, sendNoContent, sendSuccess } from '../../lib/response.js';
 import {
   createPageSchema,
@@ -42,10 +43,24 @@ export async function deletePage(req: Request, res: Response) {
 
 export async function publishPage(req: Request, res: Response) {
   const data = await pagesService.publishPage(req.params.id, req.user?.id);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.PAGE_PUBLISH,
+    module: 'pages',
+    entityType: 'page',
+    entityId: data.id,
+    afterData: { id: data.id, title: data.title, slug: data.slug, status: data.status },
+  });
   sendSuccess(res, data);
 }
 
 export async function unpublishPage(req: Request, res: Response) {
   const data = await pagesService.unpublishPage(req.params.id, req.user?.id);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.PAGE_UNPUBLISH,
+    module: 'pages',
+    entityType: 'page',
+    entityId: data.id,
+    afterData: { id: data.id, title: data.title, slug: data.slug, status: data.status },
+  });
   sendSuccess(res, data);
 }

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { sendCreated, sendNoContent, sendSuccess } from '../../lib/response.js';
 import {
   createProductCategorySchema,
@@ -103,17 +104,41 @@ export async function getProduct(req: Request, res: Response) {
 export async function createProduct(req: Request, res: Response) {
   const input = createProductSchema.parse(req.body);
   const data = await productService.createProduct(input);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.PRODUCT_CREATE,
+    module: 'catalog',
+    entityType: 'product',
+    entityId: data.id,
+    afterData: { id: data.id, name: data.name, slug: data.slug, status: data.status },
+  });
   sendCreated(res, data);
 }
 
 export async function updateProduct(req: Request, res: Response) {
+  const existing = await productService.getProductById(req.params.id);
   const input = updateProductSchema.parse(req.body);
   const data = await productService.updateProduct(req.params.id, input);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.PRODUCT_UPDATE,
+    module: 'catalog',
+    entityType: 'product',
+    entityId: data.id,
+    beforeData: { id: existing.id, name: existing.name, slug: existing.slug, status: existing.status },
+    afterData: { id: data.id, name: data.name, slug: data.slug, status: data.status },
+  });
   sendSuccess(res, data);
 }
 
 export async function deleteProduct(req: Request, res: Response) {
+  const existing = await productService.getProductById(req.params.id);
   await productService.deleteProduct(req.params.id);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.PRODUCT_DELETE,
+    module: 'catalog',
+    entityType: 'product',
+    entityId: existing.id,
+    beforeData: { id: existing.id, name: existing.name, slug: existing.slug, status: existing.status },
+  });
   sendNoContent(res);
 }
 

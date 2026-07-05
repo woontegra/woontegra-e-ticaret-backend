@@ -6,9 +6,8 @@ import { AppError } from './app-error.js';
 export interface AccessTokenPayload {
   sub: string;
   email: string;
-  username: string;
+  name: string;
   role: UserRole;
-  tenantId: string | null;
   type: 'access';
 }
 

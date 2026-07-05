@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { sendCreated, sendNoContent, sendSuccess } from '../../lib/response.js';
 import {
   createBlogPostSchema,
@@ -58,6 +59,13 @@ export async function publishPost(req: Request, res: Response) {
     req.params.id,
     req.user?.id,
   );
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.BLOG_PUBLISH,
+    module: 'blog',
+    entityType: 'blog_post',
+    entityId: data.id,
+    afterData: { id: data.id, title: data.title, slug: data.slug, status: data.status },
+  });
   sendSuccess(res, data);
 }
 
@@ -66,5 +74,12 @@ export async function unpublishPost(req: Request, res: Response) {
     req.params.id,
     req.user?.id,
   );
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.BLOG_UNPUBLISH,
+    module: 'blog',
+    entityType: 'blog_post',
+    entityId: data.id,
+    afterData: { id: data.id, title: data.title, slug: data.slug, status: data.status },
+  });
   sendSuccess(res, data);
 }

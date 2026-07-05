@@ -429,7 +429,8 @@ export type PageBlockType =
   | 'BRAND_LOGOS'
   | 'TESTIMONIALS'
   | 'NEWSLETTER'
-  | 'CUSTOM_SPACER';
+  | 'CUSTOM_SPACER'
+  | 'CAMPAIGN';
 
 export interface PageBlockDto {
   id: string;
@@ -790,7 +791,102 @@ export type OrderStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'WAITING_BANK_TRANSFER'
+  | 'CASH_ON_DELIVERY';
+
+export type PaymentMethodType =
+  | 'BANK_TRANSFER'
+  | 'CASH_ON_DELIVERY'
+  | 'PAYTR'
+  | 'IYZICO'
+  | 'EXTERNAL_LINK';
+
+export interface BankAccountConfig {
+  bankName: string;
+  accountHolder: string;
+  iban: string;
+  branch?: string | null;
+}
+
+export interface BankTransferConfig {
+  accounts: BankAccountConfig[];
+  instructions?: string | null;
+}
+
+export interface CashOnDeliveryConfig {
+  description?: string | null;
+}
+
+export interface PaytrConfig {
+  merchantId: string;
+  merchantKey: string;
+  merchantSalt: string;
+}
+
+export interface IyzicoConfig {
+  apiKey: string;
+  secretKey: string;
+  baseUrl?: string;
+}
+
+export interface ExternalLinkConfig {
+  instructions?: string | null;
+}
+
+export type PaymentMethodConfig =
+  | BankTransferConfig
+  | CashOnDeliveryConfig
+  | PaytrConfig
+  | IyzicoConfig
+  | ExternalLinkConfig;
+
+export interface PaymentMethodDto {
+  id: string;
+  type: PaymentMethodType;
+  name: string;
+  isActive: boolean;
+  isTestMode: boolean;
+  config: PaymentMethodConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BankTransferPublicConfig {
+  accounts: BankAccountConfig[];
+  instructions?: string | null;
+}
+
+export interface PaymentMethodPublicDto {
+  id: string;
+  type: PaymentMethodType;
+  name: string;
+  isTestMode: boolean;
+  config:
+    | BankTransferPublicConfig
+    | CashOnDeliveryConfig
+    | ExternalLinkConfig
+    | Record<string, never>;
+}
+
+export interface CheckoutPaymentInfoDto {
+  methodType: PaymentMethodType;
+  methodName: string;
+  bankAccounts?: BankAccountConfig[];
+  instructions?: string | null;
+  description?: string | null;
+  redirectUrl?: string | null;
+  message?: string | null;
+}
+
+export interface CheckoutResultDto {
+  order: PublicOrderDto;
+  payment: CheckoutPaymentInfoDto;
+}
 
 export type ShippingStatus =
   | 'PENDING'
@@ -798,6 +894,44 @@ export type ShippingStatus =
   | 'SHIPPED'
   | 'DELIVERED'
   | 'RETURNED';
+
+export type ShippingMethodType = 'FIXED' | 'FREE_OVER_AMOUNT';
+
+export interface ShippingCarrierDto {
+  id: string;
+  name: string;
+  trackingUrlTemplate: string;
+  logoId: string | null;
+  logoUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShippingMethodDto {
+  id: string;
+  name: string;
+  type: ShippingMethodType;
+  price: number;
+  freeShippingThreshold: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShipmentDto {
+  id: string;
+  orderId: string;
+  carrierId: string | null;
+  carrierName: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  status: ShippingStatus;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CartItemDto {
   id: string;
@@ -821,6 +955,8 @@ export interface CartDto {
   itemCount: number;
   subtotal: number;
   taxTotal: number;
+  discountTotal: number;
+  couponCode: string | null;
   grandTotal: number;
 }
 
@@ -859,10 +995,16 @@ export interface OrderDto {
   customerPhone: string;
   note: string | null;
   adminNote: string | null;
+  paymentMethodId: string | null;
+  paymentMethodType: PaymentMethodType | null;
+  paymentMethodName: string | null;
+  shipment: ShipmentDto | null;
   items: OrderItemDto[];
   createdAt: string;
   updatedAt: string;
 }
+
+export type PublicOrderDto = Omit<OrderDto, 'adminNote'>;
 
 export interface OrderSummaryDto {
   id: string;
@@ -887,4 +1029,466 @@ export interface CheckoutInput {
   customerEmail: string;
   customerPhone: string;
   note?: string | null;
+  paymentMethodId: string;
+}
+
+export type MailLogStatus = 'PENDING' | 'SENT' | 'FAILED' | 'SKIPPED';
+
+export interface MailSettingDto {
+  id: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  hasSmtpPass: boolean;
+  smtpPass?: string;
+  fromName: string;
+  fromEmail: string;
+  replyTo: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MailTemplateVariableDto {
+  name: string;
+  description: string;
+}
+
+export interface MailTemplateDto {
+  id: string;
+  key: string;
+  name: string;
+  subject: string;
+  htmlContent: string;
+  textContent: string | null;
+  variables: MailTemplateVariableDto[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MailLogDto {
+  id: string;
+  toEmail: string;
+  subject: string;
+  templateKey: string | null;
+  status: MailLogStatus;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
+export interface SendTestMailResult {
+  sent: boolean;
+  skipped?: boolean;
+  logId?: string;
+  error?: string;
+}
+
+export type ContactMessageStatus = 'NEW' | 'READ' | 'REPLIED' | 'CLOSED';
+
+export type FormSubmissionStatus = 'NEW' | 'READ' | 'CLOSED';
+
+export type FormFieldType = 'text' | 'email' | 'tel' | 'textarea' | 'select';
+
+export interface FormFieldDefinitionDto {
+  name: string;
+  label: string;
+  type: FormFieldType;
+  required?: boolean;
+  options?: string[];
+}
+
+export interface ContactMessageDto {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  subject: string | null;
+  message: string;
+  status: ContactMessageStatus;
+  adminNote: string | null;
+  repliedAt: string | null;
+  source: string | null;
+  formKey: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactMessageSummaryDto {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  status: ContactMessageStatus;
+  source: string | null;
+  createdAt: string;
+}
+
+export interface ContactMessageListResult {
+  items: ContactMessageSummaryDto[];
+  total: number;
+}
+
+export interface FormDefinitionDto {
+  id: string;
+  name: string;
+  key: string;
+  fields: FormFieldDefinitionDto[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FormDefinitionPublicDto {
+  id: string;
+  name: string;
+  key: string;
+  fields: FormFieldDefinitionDto[];
+}
+
+export interface FormSubmissionDto {
+  id: string;
+  formId: string;
+  formName: string | null;
+  formKey: string | null;
+  data: Record<string, unknown>;
+  status: FormSubmissionStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitContactInput {
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject?: string | null;
+  message: string;
+  source?: string;
+}
+
+export type ProductReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface ProductReviewPublicDto {
+  id: string;
+  name: string;
+  rating: number;
+  title: string | null;
+  comment: string;
+  adminReply: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+export interface ProductReviewsPublicResult {
+  items: ProductReviewPublicDto[];
+  total: number;
+  averageRating: number | null;
+}
+
+export interface ProductReviewDto {
+  id: string;
+  productId: string;
+  productName: string | null;
+  productSlug: string | null;
+  productKind: ProductKind | null;
+  customerId: string | null;
+  orderId: string | null;
+  name: string;
+  email: string;
+  rating: number;
+  title: string | null;
+  comment: string;
+  status: ProductReviewStatus;
+  adminReply: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductReviewSummaryDto {
+  id: string;
+  productId: string;
+  productName: string | null;
+  productSlug: string | null;
+  productKind: ProductKind | null;
+  name: string;
+  rating: number;
+  title: string | null;
+  status: ProductReviewStatus;
+  createdAt: string;
+}
+
+export interface ProductReviewListResult {
+  items: ProductReviewSummaryDto[];
+  total: number;
+}
+
+export interface SubmitProductReviewInput {
+  name: string;
+  email: string;
+  rating: number;
+  title?: string | null;
+  comment: string;
+  customerId?: string | null;
+  orderId?: string | null;
+}
+
+export interface SeoSettingDto {
+  id: string;
+  defaultTitle: string;
+  defaultDescription: string;
+  defaultOgImageId: string | null;
+  defaultOgImageUrl: string | null;
+  robotsTxt: string;
+  googleAnalyticsId: string | null;
+  metaPixelId: string | null;
+  canonicalBaseUrl: string | null;
+  sitemapIncludeProducts: boolean;
+  sitemapIncludeCategories: boolean;
+  sitemapIncludePages: boolean;
+  sitemapIncludeBlogPosts: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeoSettingPublicDto {
+  defaultTitle: string;
+  defaultDescription: string;
+  defaultOgImageUrl: string | null;
+  googleAnalyticsId: string | null;
+  metaPixelId: string | null;
+  canonicalBaseUrl: string | null;
+}
+
+export interface RedirectRuleDto {
+  id: string;
+  sourcePath: string;
+  targetPath: string;
+  statusCode: 301 | 302;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CouponType = 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING';
+
+export type CampaignType =
+  | 'BANNER'
+  | 'HERO'
+  | 'PRODUCT_PROMO'
+  | 'CATEGORY_PROMO';
+
+export interface CouponDto {
+  id: string;
+  code: string;
+  type: CouponType;
+  value: number;
+  minOrderAmount: number | null;
+  usageLimit: number | null;
+  usageLimitPerCustomer: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  isActive: boolean;
+  applicableProductIds: string[];
+  applicableCategoryIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignDto {
+  id: string;
+  name: string;
+  type: CampaignType;
+  bannerImageId: string | null;
+  bannerImageUrl: string | null;
+  title: string;
+  description: string | null;
+  buttonText: string | null;
+  buttonUrl: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignPublicDto {
+  id: string;
+  type: CampaignType;
+  bannerImageUrl: string | null;
+  title: string;
+  description: string | null;
+  buttonText: string | null;
+  buttonUrl: string | null;
+}
+
+export type NotificationType =
+  | 'NEW_ORDER'
+  | 'NEW_CONTACT_MESSAGE'
+  | 'NEW_REVIEW'
+  | 'LOW_STOCK'
+  | 'PAYMENT_WAITING'
+  | 'SHIPPING_TRACKING_ENTERED';
+
+export interface NotificationDto {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  entityType: string | null;
+  entityId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListResult {
+  items: NotificationDto[];
+  total: number;
+}
+
+export interface NotificationUnreadCountResult {
+  count: number;
+}
+
+export interface DashboardSummaryDto {
+  dateFrom: string;
+  dateTo: string;
+  totalSales: number;
+  orderCount: number;
+  averageBasket: number;
+  newCustomers: number;
+  newLeads: number;
+  pendingOrders: number;
+  lowStockCount: number;
+  newContactMessages: number;
+  recentOrders: OrderSummaryDto[];
+  topProducts: ReportTopProductDto[];
+  featuredProducts: ReportFeaturedProductDto[];
+}
+
+export interface ReportSalesByDayItemDto {
+  date: string;
+  totalSales: number;
+  orderCount: number;
+}
+
+export interface ReportSalesByDayResult {
+  dateFrom: string;
+  dateTo: string;
+  items: ReportSalesByDayItemDto[];
+}
+
+export interface ReportOrdersByStatusItemDto {
+  status: OrderStatus;
+  orderCount: number;
+  totalSales: number;
+}
+
+export interface ReportOrdersByStatusResult {
+  dateFrom: string;
+  dateTo: string;
+  items: ReportOrdersByStatusItemDto[];
+}
+
+export interface ReportTopProductDto {
+  productId: string;
+  name: string;
+  slug: string | null;
+  sku: string | null;
+  quantitySold: number;
+  revenue: number;
+}
+
+export interface ReportTopProductsResult {
+  dateFrom: string;
+  dateTo: string;
+  items: ReportTopProductDto[];
+}
+
+export interface ReportLowStockProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string | null;
+  stockQuantity: number;
+  lowStockThreshold: number;
+}
+
+export interface ReportLowStockProductsResult {
+  items: ReportLowStockProductDto[];
+  total: number;
+}
+
+export interface ReportNewCustomerItemDto {
+  type: 'customer' | 'contact' | 'form';
+  id: string;
+  name: string;
+  email: string | null;
+  detail: string;
+  createdAt: string;
+}
+
+export interface ReportNewCustomersResult {
+  dateFrom: string;
+  dateTo: string;
+  items: ReportNewCustomerItemDto[];
+  total: number;
+}
+
+export interface ReportPaymentMethodSummaryItemDto {
+  paymentMethodId: string | null;
+  methodName: string;
+  methodType: PaymentMethodType | null;
+  orderCount: number;
+  totalSales: number;
+}
+
+export interface ReportPaymentMethodSummaryResult {
+  dateFrom: string;
+  dateTo: string;
+  items: ReportPaymentMethodSummaryItemDto[];
+}
+
+export interface ReportFeaturedProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  isFeatured: boolean;
+  isBestSeller: boolean;
+  stockQuantity: number | null;
+  price: number | null;
+}
+
+export type AdminUserRole = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'STAFF';
+
+export interface AdminUserDto {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminUserRole;
+  isActive: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditLogDto {
+  id: string;
+  userId: string | null;
+  userName: string | null;
+  userEmail: string | null;
+  action: string;
+  module: string;
+  entityType: string | null;
+  entityId: string | null;
+  beforeData: unknown;
+  afterData: unknown;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogListResult {
+  items: AuditLogDto[];
+  total: number;
 }

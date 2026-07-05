@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { resolveCartSessionId } from '../../lib/cart-session.js';
 import { sendCreated, sendSuccess } from '../../lib/response.js';
 import {
@@ -16,6 +17,12 @@ import {
   updateOrderStatusSchema,
 } from './order.schema.js';
 import * as orderService from './order.service.js';
+import { updateOrderShipmentSchema } from '../shipping/shipping.schema.js';
+import * as shipmentService from '../shipping/shipment.service.js';
+import {
+  applyCartCoupon,
+  removeCartCoupon,
+} from '../promotion/promotion.controller.js';
 
 export async function getCart(req: Request, res: Response) {
   const sessionId = resolveCartSessionId(req, res);
@@ -47,6 +54,8 @@ export async function removeCartItem(req: Request, res: Response) {
   sendSuccess(res, data);
 }
 
+export { applyCartCoupon, removeCartCoupon };
+
 export async function checkout(req: Request, res: Response) {
   const sessionId = resolveCartSessionId(req, res);
   const input = checkoutSchema.parse(req.body);
@@ -73,8 +82,17 @@ export async function getOrder(req: Request, res: Response) {
 }
 
 export async function updateOrderStatus(req: Request, res: Response) {
+  const before = await orderService.getOrderById(req.params.id);
   const input = updateOrderStatusSchema.parse(req.body);
   const data = await orderService.updateOrderStatus(req.params.id, input.status);
+  auditFromRequest(req, {
+    action: AUDIT_ACTIONS.ORDER_STATUS_UPDATE,
+    module: 'commerce',
+    entityType: 'order',
+    entityId: data.id,
+    beforeData: { status: before.status, orderNumber: before.orderNumber },
+    afterData: { status: data.status, orderNumber: data.orderNumber },
+  });
   sendSuccess(res, data);
 }
 
@@ -101,6 +119,15 @@ export async function updateOrderAdminNote(req: Request, res: Response) {
   const data = await orderService.updateOrderAdminNote(
     req.params.id,
     input.note,
+  );
+  sendSuccess(res, data);
+}
+
+export async function updateOrderShipment(req: Request, res: Response) {
+  const input = updateOrderShipmentSchema.parse(req.body);
+  const data = await shipmentService.upsertOrderShipment(
+    req.params.id,
+    input,
   );
   sendSuccess(res, data);
 }

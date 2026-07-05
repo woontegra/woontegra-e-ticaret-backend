@@ -17,6 +17,10 @@ import { loadPublicProductAttributes } from './product-attribute.service.js';
 import { loadPublicProductVariants } from './product-variant.service.js';
 import { prisma } from '../../lib/prisma.js';
 import { slugify } from '../../lib/slug.js';
+import {
+  notifyLowStock,
+  shouldNotifyLowStock,
+} from '../notifications/notification.service.js';
 import type {
   CreateProductInput,
   ListProductsQuery,
@@ -282,6 +286,20 @@ export async function updateProduct(id: string, input: UpdateProductInput) {
       },
       include: productInclude,
     });
+
+    if (
+      shouldNotifyLowStock(
+        product.stockTrackingEnabled,
+        product.stockQuantity,
+        product.lowStockThreshold,
+      )
+    ) {
+      notifyLowStock({
+        id: product.id,
+        name: product.name,
+        stockQuantity: product.stockQuantity!,
+      });
+    }
 
     return toProductDto(product);
   } catch {

@@ -10,6 +10,10 @@ import type {
   GenerateProductVariantsInput,
   UpdateProductVariantInput,
 } from './product-variant.schema.js';
+import {
+  notifyLowStock,
+  shouldNotifyLowStock,
+} from '../notifications/notification.service.js';
 
 const variantInclude = {
   options: {
@@ -151,6 +155,24 @@ export async function updateProductVariant(
     where: { id: variantId },
     include: variantInclude,
   });
+
+  if (input.stockQuantity !== undefined) {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (
+      product &&
+      shouldNotifyLowStock(
+        product.stockTrackingEnabled,
+        input.stockQuantity,
+        product.lowStockThreshold,
+      )
+    ) {
+      notifyLowStock({
+        id: product.id,
+        name: product.name,
+        stockQuantity: input.stockQuantity,
+      });
+    }
+  }
 
   return toProductVariantDto(variant!);
 }

@@ -8,15 +8,10 @@ import type { LoginInput } from './auth.schema.js';
 export async function login(input: LoginInput) {
   const user = await prisma.user.findUnique({
     where: { email: input.email.toLowerCase() },
-    include: { tenant: { select: { id: true, slug: true, name: true, isActive: true } } },
   });
 
   if (!user || !user.isActive) {
     throw AppError.unauthorized('Invalid email or password');
-  }
-
-  if (user.tenant && !user.tenant.isActive) {
-    throw AppError.forbidden('Tenant is inactive');
   }
 
   const isValid = await verifyPassword(input.password, user.passwordHash);
@@ -25,24 +20,27 @@ export async function login(input: LoginInput) {
     throw AppError.unauthorized('Invalid email or password');
   }
 
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
   const accessToken = signAccessToken({
     sub: user.id,
     email: user.email,
-    username: user.username,
+    name: user.name,
     role: user.role,
-    tenantId: user.tenantId,
   });
 
   return {
     accessToken,
-    user: toSafeUser(user),
+    user: toSafeUser({ ...user, lastLoginAt: new Date() }),
   };
 }
 
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { tenant: { select: { id: true, slug: true, name: true } } },
   });
 
   if (!user || !user.isActive) {

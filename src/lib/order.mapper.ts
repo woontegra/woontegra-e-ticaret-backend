@@ -6,6 +6,9 @@ import type {
   Prisma,
   Product,
   ProductVariant,
+  Shipment,
+  ShippingCarrier,
+  PaymentMethod,
 } from '@prisma/client';
 import type {
   CartDto,
@@ -14,8 +17,10 @@ import type {
   OrderDto,
   OrderItemDto,
   OrderSummaryDto,
+  PublicOrderDto,
 } from '../types/api.js';
 import { resolveMediaUrlMap } from './media-url.js';
+import { toShipmentDto } from './shipping.mapper.js';
 
 function decimalToNumber(value: Prisma.Decimal | null | undefined): number | null {
   if (value === null || value === undefined) return null;
@@ -29,6 +34,8 @@ type CartItemWithRelations = CartItem & {
 
 type OrderWithItems = Order & {
   items: OrderItem[];
+  shipment?: (Shipment & { carrier?: ShippingCarrier | null }) | null;
+  paymentMethod?: PaymentMethod | null;
 };
 
 export function buildLineLabel(
@@ -94,7 +101,11 @@ export async function toCartDto(
     itemCount,
     subtotal: roundMoney(subtotal),
     taxTotal: roundMoney(taxTotal),
-    grandTotal: roundMoney(subtotal + taxTotal),
+    discountTotal: roundMoney(Number(cart.discountTotal ?? 0)),
+    couponCode: cart.couponCode ?? null,
+    grandTotal: roundMoney(
+      subtotal + taxTotal - Number(cart.discountTotal ?? 0),
+    ),
   };
 }
 
@@ -138,10 +149,20 @@ export function toOrderDto(order: OrderWithItems): OrderDto {
     customerPhone: order.customerPhone,
     note: order.note,
     adminNote: order.adminNote,
+    paymentMethodId: order.paymentMethodId,
+    paymentMethodType: order.paymentMethod?.type ?? null,
+    paymentMethodName: order.paymentMethod?.name ?? null,
+    shipment: order.shipment ? toShipmentDto(order.shipment) : null,
     items: order.items.map(toOrderItemDto),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   };
+}
+
+export function toPublicOrderDto(order: OrderWithItems): PublicOrderDto {
+  const dto = toOrderDto(order);
+  const { adminNote: _adminNote, ...publicDto } = dto;
+  return publicDto;
 }
 
 export function toOrderSummaryDto(order: Order): OrderSummaryDto {

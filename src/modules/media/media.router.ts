@@ -34,7 +34,7 @@ const upload = multer({
 export const mediaRouter = Router();
 
 mediaRouter.use(requireAuth);
-mediaRouter.use(requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN'));
+mediaRouter.use(requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR'));
 
 mediaRouter.get('/folders', asyncHandler(mediaController.listFolders));
 mediaRouter.get('/', asyncHandler(mediaController.listMedia));

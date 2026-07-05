@@ -9,10 +9,10 @@ export const productAttributesAdminRouter = Router();
 export const productsAdminRouter = Router();
 export const catalogPublicRouter = Router();
 
-const adminRoles = requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN');
+const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 const productAdminRoles = requireRoles(
   'SUPER_ADMIN',
-  'OWNER',
+  'ADMIN',
   'ADMIN',
   'STAFF',
 );

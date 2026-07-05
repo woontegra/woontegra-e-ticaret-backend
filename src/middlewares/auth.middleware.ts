@@ -32,9 +32,8 @@ export function authMiddleware(options: AuthMiddlewareOptions = {}) {
     req.user = {
       id: payload.sub,
       email: payload.email,
-      username: payload.username,
+      name: payload.name,
       role: payload.role,
-      tenantId: payload.tenantId,
     };
 
     next();

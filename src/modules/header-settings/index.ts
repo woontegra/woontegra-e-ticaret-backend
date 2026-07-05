@@ -6,7 +6,7 @@ import * as headerSettingsController from './header-settings.controller.js';
 export const headerSettingsAdminRouter = Router();
 export const headerSettingsPublicRouter = Router();
 
-headerSettingsAdminRouter.use(requireAuth, requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN'));
+headerSettingsAdminRouter.use(requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR'));
 headerSettingsAdminRouter.get('/', asyncHandler(headerSettingsController.getHeaderSettings));
 headerSettingsAdminRouter.put('/', asyncHandler(headerSettingsController.updateHeaderSettings));
 

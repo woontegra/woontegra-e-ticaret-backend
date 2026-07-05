@@ -7,6 +7,12 @@ import helmet from 'helmet';
 import { env } from './config/index.js';
 import { errorHandler } from './middlewares/index.js';
 import { apiRouter } from './routes/index.js';
+import {
+  redirectMiddleware,
+  serveRobotsTxt,
+  serveSitemapXml,
+} from './modules/seo/index.js';
+import { asyncHandler } from './utils/async-handler.js';
 
 export function createApp(): Express {
   const app = express();
@@ -56,6 +62,11 @@ export function createApp(): Express {
   app.get('/health', (_req, res) => {
     res.redirect(307, '/api/health');
   });
+
+  app.get('/robots.txt', asyncHandler(serveRobotsTxt));
+  app.get('/sitemap.xml', asyncHandler(serveSitemapXml));
+
+  app.use(redirectMiddleware);
 
   app.use('/api', apiRouter);
 

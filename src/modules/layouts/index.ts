@@ -6,7 +6,7 @@ import * as layoutController from './layout.controller.js';
 export const layoutsAdminRouter = Router();
 export const layoutsPublicRouter = Router();
 
-const adminRoles = requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN');
+const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 
 layoutsAdminRouter.use(requireAuth, adminRoles);
 layoutsAdminRouter.get('/home/draft', asyncHandler(layoutController.getHomeDraft));

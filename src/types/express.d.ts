@@ -6,14 +6,8 @@ declare global {
       user?: {
         id: string;
         email: string;
-        username: string;
-        role: UserRole;
-        tenantId: string | null;
-      };
-      tenant?: {
-        id: string;
-        slug: string;
         name: string;
+        role: UserRole;
       };
     }
   }

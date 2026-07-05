@@ -12,8 +12,8 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
-  OWNER
   ADMIN
+  EDITOR
   STAFF
 }
 
@@ -51,6 +51,7 @@ enum PageBlockType {
   TESTIMONIALS
   NEWSLETTER
   CUSTOM_SPACER
+  CAMPAIGN
 }
 
 enum MenuLocation {
@@ -100,6 +101,72 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  WAITING_BANK_TRANSFER
+  CASH_ON_DELIVERY
+}
+
+enum PaymentMethodType {
+  BANK_TRANSFER
+  CASH_ON_DELIVERY
+  PAYTR
+  IYZICO
+  EXTERNAL_LINK
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum MailLogStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
+  CLOSED
+}
+
+enum FormSubmissionStatus {
+  NEW
+  READ
+  CLOSED
+}
+
+enum ProductReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+enum CampaignType {
+  BANNER
+  HERO
+  PRODUCT_PROMO
+  CATEGORY_PROMO
+}
+
+enum NotificationType {
+  NEW_ORDER
+  NEW_CONTACT_MESSAGE
+  NEW_REVIEW
+  LOW_STOCK
+  PAYMENT_WAITING
+  SHIPPING_TRACKING_ENTERED
 }
 
 enum ShippingStatus {
@@ -108,6 +175,11 @@ enum ShippingStatus {
   SHIPPED
   DELIVERED
   RETURNED
+}
+
+enum ShippingMethodType {
+  FIXED
+  FREE_OVER_AMOUNT
 }
 
 enum HeaderLogoPosition {
@@ -438,6 +510,7 @@ model Product {
   variants             ProductVariant[]
   cartItems            CartItem[]
   orderItems           OrderItem[]
+  reviews              ProductReview[]
 
   @@index([status])
   @@index([categoryId])
@@ -542,15 +615,20 @@ model ProductAttributeAssignment {
 }
 
 model Cart {
-  id         String   @id @default(cuid())
-  sessionId  String?  @unique
-  customerId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  sessionId     String?  @unique
+  customerId    String?
+  couponId      String?
+  couponCode    String?
+  discountTotal Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  items CartItem[]
+  coupon Coupon?    @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items  CartItem[]
 
   @@index([customerId])
+  @@index([couponId])
 }
 
 model CartItem {
@@ -590,16 +668,105 @@ model Order {
   customerPhone  String
   note           String?
   adminNote      String?
+  couponId       String?
+  couponCode     String?
+  paymentMethodId String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  items OrderItem[]
+  items           OrderItem[]
+  shipment        Shipment?
+  paymentMethod   PaymentMethod?  @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  paymentTransactions PaymentTransaction[]
+  reviews         ProductReview[]
+  coupon          Coupon?         @relation(fields: [couponId], references: [id], onDelete: SetNull)
 
   @@index([customerId])
   @@index([status])
   @@index([paymentStatus])
   @@index([shippingStatus])
+  @@index([paymentMethodId])
   @@index([createdAt])
+}
+
+model PaymentMethod {
+  id         String            @id @default(cuid())
+  type       PaymentMethodType @unique
+  name       String
+  isActive   Boolean           @default(false)
+  isTestMode Boolean           @default(true)
+  config     Json              @default("{}")
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  orders Order[]
+
+  @@index([isActive])
+}
+
+model PaymentTransaction {
+  id                String                   @id @default(cuid())
+  orderId           String
+  provider          PaymentMethodType
+  status            PaymentTransactionStatus @default(PENDING)
+  amount            Decimal                  @db.Decimal(12, 2)
+  currency          String                   @default("TRY")
+  providerReference String?
+  rawResponse       Json?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([provider])
+  @@index([status])
+}
+
+model ShippingCarrier {
+  id                  String   @id @default(cuid())
+  name                String
+  trackingUrlTemplate String
+  logoId              String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  shipments Shipment[]
+
+  @@index([isActive])
+}
+
+model ShippingMethod {
+  id                    String             @id @default(cuid())
+  name                  String
+  type                  ShippingMethodType
+  price                 Decimal            @db.Decimal(12, 2)
+  freeShippingThreshold Decimal?           @db.Decimal(12, 2)
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([isActive])
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  orderId        String         @unique
+  carrierId      String?
+  trackingNumber String?
+  trackingUrl    String?
+  status         ShippingStatus @default(PENDING)
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  order   Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier ShippingCarrier? @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+
+  @@index([carrierId])
+  @@index([status])
 }
 
 model OrderItem {
@@ -684,76 +851,248 @@ model MediaAsset {
   @@index([createdAt])
 }
 
-model Tenant {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs        AuditLog[]
+  mediaAssets      MediaAsset[]
+  pagesCreated     Page[]     @relation("PageCreatedBy")
+  pagesUpdated     Page[]     @relation("PageUpdatedBy")
+  blogPostsCreated BlogPost[] @relation("BlogPostCreatedBy")
+  blogPostsUpdated BlogPost[] @relation("BlogPostUpdatedBy")
+
+  @@index([email])
+  @@index([role])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  module     String
+  entityType String?
+  entityId   String?
+  beforeData Json?
+  afterData  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MailSetting {
+  id        String   @id @default("default")
+  smtpHost  String   @default("")
+  smtpPort  Int      @default(587)
+  smtpUser  String   @default("")
+  smtpPass  String   @default("")
+  fromName  String   @default("")
+  fromEmail String   @default("")
+  replyTo   String?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MailTemplate {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   Json     @default("[]")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model MailLog {
+  id           String        @id @default(cuid())
+  toEmail      String
+  subject      String
+  templateKey  String?
+  status       MailLogStatus @default(PENDING)
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+
+  @@index([templateKey])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ContactMessage {
+  id        String               @id @default(cuid())
   name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    ContactMessageStatus @default(NEW)
+  adminNote String?
+  repliedAt DateTime?
+  source    String?
+  formKey   String?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model FormDefinition {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  fields    Json     @default("[]")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
-  settings  Setting[]
-  auditLogs AuditLog[]
+  submissions FormSubmission[]
+
+  @@index([isActive])
 }
 
-model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  email        String   @unique
-  passwordHash String
-  firstName    String?
-  lastName     String?
-  role         UserRole
-  tenantId     String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model FormSubmission {
+  id        String               @id @default(cuid())
+  formId    String
+  data      Json
+  status    FormSubmissionStatus @default(NEW)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 
-  tenant    Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  auditLogs AuditLog[]
-  mediaAssets MediaAsset[]
-  pagesCreated Page[] @relation("PageCreatedBy")
-  pagesUpdated Page[] @relation("PageUpdatedBy")
-  blogPostsCreated BlogPost[] @relation("BlogPostCreatedBy")
-  blogPostsUpdated BlogPost[] @relation("BlogPostUpdatedBy")
+  form FormDefinition @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
-  @@index([email])
-  @@index([username])
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  tenantId  String?
-  userId    String?
-  action    String
-  entity    String
-  entityId  String?
-  metadata  Json?
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([tenantId])
-  @@index([userId])
-  @@index([entity, entityId])
+  @@index([formId])
+  @@index([status])
   @@index([createdAt])
 }
 
-model Setting {
-  id        String   @id @default(cuid())
-  tenantId  String
-  key       String
-  value     Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ProductReview {
+  id         String              @id @default(cuid())
+  productId  String
+  customerId String?
+  orderId    String?
+  name       String
+  email      String
+  rating     Int
+  title      String?
+  comment    String
+  status     ProductReviewStatus @default(PENDING)
+  adminReply String?
+  approvedAt DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
-  @@unique([tenantId, key])
-  @@index([tenantId])
+  @@index([productId])
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model SeoSetting {
+  id                  String   @id @default("default")
+  defaultTitle        String   @default("")
+  defaultDescription  String   @default("")
+  defaultOgImageId    String?
+  robotsTxt           String   @default("")
+  googleAnalyticsId   String?
+  metaPixelId         String?
+  canonicalBaseUrl    String?
+  sitemapIncludeProducts   Boolean @default(true)
+  sitemapIncludeCategories Boolean @default(true)
+  sitemapIncludePages      Boolean @default(true)
+  sitemapIncludeBlogPosts  Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model RedirectRule {
+  id         String   @id @default(cuid())
+  sourcePath String   @unique
+  targetPath String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Coupon {
+  id                     String     @id @default(cuid())
+  code                   String     @unique
+  type                   CouponType
+  value                  Decimal    @db.Decimal(12, 2)
+  minOrderAmount         Decimal?   @db.Decimal(12, 2)
+  usageLimit             Int?
+  usageLimitPerCustomer  Int?
+  startsAt               DateTime?
+  endsAt                 DateTime?
+  isActive               Boolean    @default(true)
+  applicableProductIds   Json       @default("[]")
+  applicableCategoryIds  Json       @default("[]")
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  carts  Cart[]
+  orders Order[]
+
+  @@index([isActive])
+  @@index([code])
+}
+
+model Campaign {
+  id            String       @id @default(cuid())
+  name          String
+  type          CampaignType
+  bannerImageId String?
+  title         String
+  description   String?
+  buttonText    String?
+  buttonUrl     String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([isActive])
+  @@index([type])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  type       NotificationType
+  title      String
+  message    String
+  entityType String?
+  entityId   String?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([isRead, createdAt(sort: Desc)])
+  @@index([type])
 }

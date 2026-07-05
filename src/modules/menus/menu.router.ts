@@ -7,7 +7,7 @@ export const menusAdminRouter = Router();
 export const menuItemsAdminRouter = Router();
 export const menusPublicRouter = Router();
 
-const adminRoles = requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN');
+const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 
 menusAdminRouter.use(requireAuth, adminRoles);
 menusAdminRouter.get('/', asyncHandler(menuController.listMenus));

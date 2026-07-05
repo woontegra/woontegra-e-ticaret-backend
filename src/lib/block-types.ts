@@ -18,6 +18,7 @@ export const PAGE_BLOCK_TYPES: PageBlockType[] = [
   'TESTIMONIALS',
   'NEWSLETTER',
   'CUSTOM_SPACER',
+  'CAMPAIGN',
 ];
 
 export const PAGE_BLOCK_TYPE_LABELS: Record<PageBlockType, string> = {
@@ -37,6 +38,7 @@ export const PAGE_BLOCK_TYPE_LABELS: Record<PageBlockType, string> = {
   TESTIMONIALS: 'Referanslar',
   NEWSLETTER: 'Bülten',
   CUSTOM_SPACER: 'Boşluk',
+  CAMPAIGN: 'Kampanya',
 };
 
 export function isValidBlockType(type: string): type is PageBlockType {

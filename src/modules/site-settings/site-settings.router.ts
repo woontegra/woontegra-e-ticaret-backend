@@ -6,7 +6,7 @@ import * as siteSettingsController from './site-settings.controller.js';
 export const siteSettingsAdminRouter = Router();
 
 siteSettingsAdminRouter.use(requireAuth);
-siteSettingsAdminRouter.use(requireRoles('SUPER_ADMIN', 'OWNER'));
+siteSettingsAdminRouter.use(requireRoles('SUPER_ADMIN', 'ADMIN'));
 
 siteSettingsAdminRouter.get('/', asyncHandler(siteSettingsController.getSiteSettings));
 siteSettingsAdminRouter.put('/', asyncHandler(siteSettingsController.updateSiteSettings));

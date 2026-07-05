@@ -5,8 +5,9 @@ import { DEFAULT_HEADER_SETTINGS } from '../lib/default-header.js';
 import { DEFAULT_THEME_SETTINGS } from '../lib/default-theme.js';
 import { toInputJson } from '../lib/json.js';
 
-export const DEMO_OWNER_PASSWORD = 'Demo@Woontegra2026!';
+export const DEMO_ADMIN_PASSWORD = 'Demo@Woontegra2026!';
 export const SUPER_ADMIN_PASSWORD = 'SuperAdmin@Woontegra2026!';
+export const DEMO_EDITOR_PASSWORD = 'Editor@Woontegra2026!';
 export const DEMO_STAFF_PASSWORD = 'Staff@Woontegra2026!';
 
 const LEGAL_PAGES = [
@@ -154,49 +155,20 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     },
   });
 
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: 'demo' },
-    update: { isActive: true },
-    create: {
-      slug: 'demo',
-      name: 'Demo Mağaza',
-      isActive: true,
-    },
-  });
-
-  await prisma.setting.upsert({
-    where: {
-      tenantId_key: {
-        tenantId: tenant.id,
-        key: 'store.name',
-      },
-    },
-    update: {},
-    create: {
-      tenantId: tenant.id,
-      key: 'store.name',
-      value: '',
-    },
-  });
-
-  const ownerHash = await bcrypt.hash(DEMO_OWNER_PASSWORD, 12);
-  const owner = await prisma.user.upsert({
-    where: { email: 'owner@demo.com' },
+  const adminHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 12);
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@demo.com' },
     update: {
-      passwordHash: ownerHash,
+      passwordHash: adminHash,
       isActive: true,
-      role: UserRole.OWNER,
-      tenantId: tenant.id,
-      username: 'demo_owner',
+      role: UserRole.ADMIN,
+      name: 'Demo Admin',
     },
     create: {
-      username: 'demo_owner',
-      email: 'owner@demo.com',
-      passwordHash: ownerHash,
-      firstName: 'Demo',
-      lastName: 'Owner',
-      role: UserRole.OWNER,
-      tenantId: tenant.id,
+      name: 'Demo Admin',
+      email: 'admin@demo.com',
+      passwordHash: adminHash,
+      role: UserRole.ADMIN,
       isActive: true,
     },
   });
@@ -208,17 +180,31 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
       passwordHash: superAdminHash,
       isActive: true,
       role: UserRole.SUPER_ADMIN,
-      tenantId: null,
-      username: 'superadmin',
+      name: 'Super Admin',
     },
     create: {
-      username: 'superadmin',
+      name: 'Super Admin',
       email: 'superadmin@woontegra.com',
       passwordHash: superAdminHash,
-      firstName: 'Super',
-      lastName: 'Admin',
       role: UserRole.SUPER_ADMIN,
-      tenantId: null,
+      isActive: true,
+    },
+  });
+
+  const editorHash = await bcrypt.hash(DEMO_EDITOR_PASSWORD, 12);
+  const editor = await prisma.user.upsert({
+    where: { email: 'editor@demo.com' },
+    update: {
+      passwordHash: editorHash,
+      isActive: true,
+      role: UserRole.EDITOR,
+      name: 'Demo Editor',
+    },
+    create: {
+      name: 'Demo Editor',
+      email: 'editor@demo.com',
+      passwordHash: editorHash,
+      role: UserRole.EDITOR,
       isActive: true,
     },
   });
@@ -230,17 +216,13 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
       passwordHash: staffHash,
       isActive: true,
       role: UserRole.STAFF,
-      tenantId: tenant.id,
-      username: 'demo_staff',
+      name: 'Demo Staff',
     },
     create: {
-      username: 'demo_staff',
+      name: 'Demo Staff',
       email: 'staff@demo.com',
       passwordHash: staffHash,
-      firstName: 'Demo',
-      lastName: 'Staff',
       role: UserRole.STAFF,
-      tenantId: tenant.id,
       isActive: true,
     },
   });
@@ -253,8 +235,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
   await seedDefaultHomeLayout(prisma);
 
   console.log('[seed] Site & company settings initialized');
-  console.log('[seed] Demo tenant:', tenant.slug);
-  console.log('[seed] Owner user:', owner.email, '/', DEMO_OWNER_PASSWORD);
+  console.log('[seed] Admin user:', admin.email, '/', DEMO_ADMIN_PASSWORD);
+  console.log('[seed] Editor user:', editor.email, '/', DEMO_EDITOR_PASSWORD);
   console.log('[seed] Staff user:', staff.email, '/', DEMO_STAFF_PASSWORD);
   console.log('[seed] Super admin:', superAdmin.email, '/', SUPER_ADMIN_PASSWORD);
 }

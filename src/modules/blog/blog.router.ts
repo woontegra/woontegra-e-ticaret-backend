@@ -8,7 +8,7 @@ export const blogCategoriesAdminRouter = Router();
 export const blogPostsAdminRouter = Router();
 export const blogPublicRouter = Router();
 
-const adminRoles = requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN');
+const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 
 blogCategoriesAdminRouter.use(requireAuth, adminRoles);
 blogCategoriesAdminRouter.get('/', asyncHandler(blogCategoryController.listCategories));

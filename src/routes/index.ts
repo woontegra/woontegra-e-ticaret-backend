@@ -52,6 +52,47 @@ import {
   ordersAdminRouter,
   ordersPublicRouter,
 } from '../modules/commerce/index.js';
+import {
+  shippingCarriersAdminRouter,
+  shippingMethodsAdminRouter,
+} from '../modules/shipping/index.js';
+import {
+  mailAdminRouter,
+  mailSettingsAdminRouter,
+  mailTemplatesAdminRouter,
+} from '../modules/mail/index.js';
+import {
+  paymentMethodsAdminRouter,
+  paymentMethodsPublicRouter,
+} from '../modules/payment/index.js';
+import {
+  contactMessagesAdminRouter,
+  contactPublicRouter,
+  formDefinitionsAdminRouter,
+  formSubmissionsAdminRouter,
+} from '../modules/contact/index.js';
+import {
+  reviewsAdminRouter,
+  reviewsPublicRouter,
+} from '../modules/reviews/index.js';
+import {
+  redirectMiddleware,
+  seoAdminRouter,
+  seoPublicRouter,
+  serveRobotsTxt,
+  serveSitemapXml,
+} from '../modules/seo/index.js';
+import {
+  campaignsAdminRouter,
+  couponsAdminRouter,
+  promotionPublicRouter,
+} from '../modules/promotion/index.js';
+import { notificationsAdminRouter } from '../modules/notifications/index.js';
+import { auditAdminRouter } from '../modules/audit/index.js';
+import {
+  dashboardAdminRouter,
+  reportsAdminRouter,
+} from '../modules/reports/index.js';
 import { usersRouter } from '../modules/users/index.js';
 
 export const apiRouter = Router();
@@ -79,6 +120,23 @@ apiRouter.use('/admin/brands', brandsAdminRouter);
 apiRouter.use('/admin/product-attributes', productAttributesAdminRouter);
 apiRouter.use('/admin/products', productsAdminRouter);
 apiRouter.use('/admin/orders', ordersAdminRouter);
+apiRouter.use('/admin/shipping-carriers', shippingCarriersAdminRouter);
+apiRouter.use('/admin/shipping-methods', shippingMethodsAdminRouter);
+apiRouter.use('/admin/payment-methods', paymentMethodsAdminRouter);
+apiRouter.use('/admin/mail-settings', mailSettingsAdminRouter);
+apiRouter.use('/admin/mail-templates', mailTemplatesAdminRouter);
+apiRouter.use('/admin/mail', mailAdminRouter);
+apiRouter.use('/admin/contact-messages', contactMessagesAdminRouter);
+apiRouter.use('/admin/form-definitions', formDefinitionsAdminRouter);
+apiRouter.use('/admin/form-submissions', formSubmissionsAdminRouter);
+apiRouter.use('/admin/product-reviews', reviewsAdminRouter);
+apiRouter.use('/admin/seo', seoAdminRouter);
+apiRouter.use('/admin/coupons', couponsAdminRouter);
+apiRouter.use('/admin/campaigns', campaignsAdminRouter);
+apiRouter.use('/admin/notifications', notificationsAdminRouter);
+apiRouter.use('/admin/dashboard', dashboardAdminRouter);
+apiRouter.use('/admin/reports', reportsAdminRouter);
+apiRouter.use('/admin/audit-logs', auditAdminRouter);
 apiRouter.use('/public/site-settings', siteSettingsPublicRouter);
 apiRouter.use('/public/company-settings', companySettingsPublicRouter);
 apiRouter.use('/public/pages', pagesPublicRouter);
@@ -90,5 +148,10 @@ apiRouter.use('/public/header-settings', headerSettingsPublicRouter);
 apiRouter.use('/public/layouts', layoutsPublicRouter);
 apiRouter.use('/public/cart', cartPublicRouter);
 apiRouter.use('/public/checkout', checkoutPublicRouter);
+apiRouter.use('/public/payment-methods', paymentMethodsPublicRouter);
+apiRouter.use('/public/contact', contactPublicRouter);
+apiRouter.use('/public', reviewsPublicRouter);
+apiRouter.use('/public', seoPublicRouter);
+apiRouter.use('/public', promotionPublicRouter);
 apiRouter.use('/public/orders', ordersPublicRouter);
 apiRouter.use('/public', catalogPublicRouter);

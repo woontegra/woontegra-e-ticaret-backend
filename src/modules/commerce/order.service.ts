@@ -7,6 +7,7 @@ import {
 import { AppError } from '../../lib/app-error.js';
 import { toOrderDto, toOrderSummaryDto } from '../../lib/order.mapper.js';
 import { prisma } from '../../lib/prisma.js';
+import { maybeNotifyPaymentWaiting } from '../notifications/notification.service.js';
 import type { ListOrdersQuery } from './order.schema.js';
 
 function parseDateStart(value: string): Date {
@@ -70,7 +71,11 @@ async function ensureOrder(id: string) {
 async function loadOrderDto(id: string) {
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { items: true },
+    include: {
+      items: true,
+      paymentMethod: true,
+      shipment: { include: { carrier: true } },
+    },
   });
   if (!order) throw AppError.notFound('Order not found');
   return toOrderDto(order);
@@ -109,7 +114,11 @@ export async function getOrderById(id: string) {
 export async function getOrderByNumber(orderNumber: string) {
   const order = await prisma.order.findUnique({
     where: { orderNumber },
-    include: { items: true },
+    include: {
+      items: true,
+      paymentMethod: true,
+      shipment: { include: { carrier: true } },
+    },
   });
 
   if (!order) {
@@ -129,8 +138,11 @@ export async function updateOrderPaymentStatus(
   id: string,
   paymentStatus: PaymentStatus,
 ) {
-  await ensureOrder(id);
+  const order = await prisma.order.findUnique({ where: { id } });
+  if (!order) throw AppError.notFound('Order not found');
+
   await prisma.order.update({ where: { id }, data: { paymentStatus } });
+  maybeNotifyPaymentWaiting(order, paymentStatus);
   return loadOrderDto(id);
 }
 
@@ -139,10 +151,35 @@ export async function updateOrderShippingStatus(
   shippingStatus: ShippingStatus | null,
 ) {
   await ensureOrder(id);
-  await prisma.order.update({
-    where: { id },
-    data: { shippingStatus },
+  const status = shippingStatus ?? ShippingStatus.PENDING;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id },
+      data: { shippingStatus: shippingStatus },
+    });
+
+    const shipment = await tx.shipment.findUnique({ where: { orderId: id } });
+
+    if (shipment) {
+      const now = new Date();
+      await tx.shipment.update({
+        where: { id: shipment.id },
+        data: {
+          status,
+          ...(status === 'SHIPPED' ||
+          status === 'DELIVERED' ||
+          status === 'RETURNED'
+            ? { shippedAt: shipment.shippedAt ?? now }
+            : {}),
+          ...(status === 'DELIVERED'
+            ? { deliveredAt: shipment.deliveredAt ?? now }
+            : {}),
+        },
+      });
+    }
   });
+
   return loadOrderDto(id);
 }
 

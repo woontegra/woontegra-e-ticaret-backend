@@ -18,6 +18,14 @@ cartPublicRouter.delete(
   '/items/:id',
   asyncHandler(commerceController.removeCartItem),
 );
+cartPublicRouter.post(
+  '/coupon',
+  asyncHandler(commerceController.applyCartCoupon),
+);
+cartPublicRouter.delete(
+  '/coupon',
+  asyncHandler(commerceController.removeCartCoupon),
+);
 
 checkoutPublicRouter.post('/', asyncHandler(commerceController.checkout));
 
@@ -28,7 +36,7 @@ ordersPublicRouter.get(
 
 const orderAdminRoles = requireRoles(
   'SUPER_ADMIN',
-  'OWNER',
+  'ADMIN',
   'ADMIN',
   'STAFF',
 );
@@ -50,5 +58,9 @@ ordersAdminRouter.patch(
 ordersAdminRouter.patch(
   '/:id/note',
   asyncHandler(commerceController.updateOrderAdminNote),
+);
+ordersAdminRouter.patch(
+  '/:id/shipment',
+  asyncHandler(commerceController.updateOrderShipment),
 );
 ordersAdminRouter.get('/:id', asyncHandler(commerceController.getOrder));

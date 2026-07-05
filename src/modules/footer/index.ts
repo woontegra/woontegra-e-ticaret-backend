@@ -8,7 +8,7 @@ export const footerColumnsAdminRouter = Router();
 export const footerLinksAdminRouter = Router();
 export const footerPublicRouter = Router();
 
-const adminRoles = requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN');
+const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 
 footerSettingsAdminRouter.use(requireAuth, adminRoles);
 footerSettingsAdminRouter.get('/', asyncHandler(footerController.getFooterSettings));

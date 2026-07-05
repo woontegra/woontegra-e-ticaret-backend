@@ -7,6 +7,7 @@ import {
 } from '../../lib/order.mapper.js';
 import { prisma } from '../../lib/prisma.js';
 import type { AddCartItemInput, UpdateCartItemInput } from './cart.schema.js';
+import { refreshCartCoupon } from '../promotion/cart-coupon.service.js';
 
 const cartItemInclude = {
   product: true,
@@ -130,7 +131,14 @@ export async function addCartItem(sessionId: string, input: AddCartItemInput) {
     include: { items: { include: cartItemInclude } },
   });
 
-  return toCartDto(updated!);
+  await refreshCartCoupon(cart.id);
+
+  const finalCart = await prisma.cart.findUnique({
+    where: { id: cart.id },
+    include: { items: { include: cartItemInclude } },
+  });
+
+  return toCartDto(finalCart!);
 }
 
 export async function updateCartItem(
@@ -152,6 +160,8 @@ export async function updateCartItem(
     data: { quantity: input.quantity },
   });
 
+  await refreshCartCoupon(cart.id);
+
   const updated = await prisma.cart.findUnique({
     where: { id: cart.id },
     include: { items: { include: cartItemInclude } },
@@ -172,6 +182,8 @@ export async function removeCartItem(sessionId: string, itemId: string) {
 
   await prisma.cartItem.delete({ where: { id: itemId } });
 
+  await refreshCartCoupon(cart.id);
+
   const updated = await prisma.cart.findUnique({
     where: { id: cart.id },
     include: { items: { include: cartItemInclude } },
@@ -186,4 +198,8 @@ export async function getCartRecordBySession(sessionId: string) {
 
 export async function clearCart(cartId: string) {
   await prisma.cartItem.deleteMany({ where: { cartId } });
+  await prisma.cart.update({
+    where: { id: cartId },
+    data: { couponId: null, couponCode: null, discountTotal: 0 },
+  });
 }

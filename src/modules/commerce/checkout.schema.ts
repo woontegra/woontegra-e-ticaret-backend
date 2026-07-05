@@ -5,6 +5,7 @@ export const checkoutSchema = z.object({
   customerEmail: z.string().email().max(200),
   customerPhone: z.string().min(7).max(30),
   note: z.string().max(1000).nullable().optional(),
+  paymentMethodId: z.string().min(1),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

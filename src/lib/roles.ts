@@ -2,17 +2,17 @@ import type { UserRole } from '@prisma/client';
 
 const ROLE_RANK: Record<UserRole, number> = {
   SUPER_ADMIN: 4,
-  OWNER: 3,
-  ADMIN: 2,
+  ADMIN: 3,
+  EDITOR: 2,
   STAFF: 1,
 };
 
 export function canManageUsers(role: UserRole): boolean {
-  return role === 'SUPER_ADMIN' || role === 'OWNER';
+  return role === 'SUPER_ADMIN' || role === 'ADMIN';
 }
 
 export function canViewUsers(role: UserRole): boolean {
-  return role === 'SUPER_ADMIN' || role === 'OWNER' || role === 'ADMIN';
+  return role === 'SUPER_ADMIN' || role === 'ADMIN';
 }
 
 export function canAssignRole(
@@ -20,8 +20,8 @@ export function canAssignRole(
   targetRole: UserRole,
 ): boolean {
   if (actorRole === 'SUPER_ADMIN') return true;
-  if (actorRole === 'OWNER') {
-    return targetRole === 'ADMIN' || targetRole === 'STAFF';
+  if (actorRole === 'ADMIN') {
+    return targetRole !== 'SUPER_ADMIN';
   }
   return false;
 }
@@ -31,18 +31,15 @@ export function hasMinimumRole(role: UserRole, minimum: UserRole): boolean {
 }
 
 export function assertCanManageTargetUser(
-  actor: { id: string; role: UserRole; tenantId: string | null },
-  target: { id: string; role: UserRole; tenantId: string | null },
+  actor: { id: string; role: UserRole },
+  target: { id: string; role: UserRole },
 ): void {
   if (actor.id === target.id) return;
 
   if (actor.role === 'SUPER_ADMIN') return;
 
-  if (actor.role === 'OWNER') {
+  if (actor.role === 'ADMIN') {
     if (target.role === 'SUPER_ADMIN') {
-      throw new Error('FORBIDDEN');
-    }
-    if (target.tenantId !== actor.tenantId) {
       throw new Error('FORBIDDEN');
     }
     return;

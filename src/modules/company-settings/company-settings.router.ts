@@ -6,7 +6,7 @@ import * as companySettingsController from './company-settings.controller.js';
 export const companySettingsAdminRouter = Router();
 
 companySettingsAdminRouter.use(requireAuth);
-companySettingsAdminRouter.use(requireRoles('SUPER_ADMIN', 'OWNER'));
+companySettingsAdminRouter.use(requireRoles('SUPER_ADMIN', 'ADMIN'));
 
 companySettingsAdminRouter.get('/', asyncHandler(companySettingsController.getCompanySettings));
 companySettingsAdminRouter.put('/', asyncHandler(companySettingsController.updateCompanySettings));

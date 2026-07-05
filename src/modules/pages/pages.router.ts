@@ -6,7 +6,7 @@ import * as pagesController from './pages.controller.js';
 export const pagesAdminRouter = Router();
 
 pagesAdminRouter.use(requireAuth);
-pagesAdminRouter.use(requireRoles('SUPER_ADMIN', 'OWNER', 'ADMIN'));
+pagesAdminRouter.use(requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR'));
 
 pagesAdminRouter.get('/', asyncHandler(pagesController.listPages));
 pagesAdminRouter.post('/', asyncHandler(pagesController.createPage));
