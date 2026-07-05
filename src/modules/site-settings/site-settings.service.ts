@@ -17,12 +17,18 @@ export async function getSiteSettings() {
 }
 
 export async function updateSiteSettings(input: UpdateSiteSettingInput) {
+  const { storefrontUi, ...rest } = input;
+
   const setting = await prisma.siteSetting.upsert({
     where: { id: SETTINGS_SINGLETON_ID },
-    update: input,
+    update: {
+      ...rest,
+      ...(storefrontUi !== undefined ? { storefrontUi } : {}),
+    },
     create: {
       id: SETTINGS_SINGLETON_ID,
-      ...input,
+      ...rest,
+      ...(storefrontUi !== undefined ? { storefrontUi } : {}),
     },
   });
 

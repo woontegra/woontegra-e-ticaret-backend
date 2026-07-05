@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidSlug, slugify } from '../../lib/slug.js';
+import { paginationQuerySchema } from '../../lib/pagination.js';
 
 const slugSchema = z
   .string()
@@ -25,9 +26,20 @@ export const createProductCategorySchema = z.object({
 
 export const updateProductCategorySchema = createProductCategorySchema.partial();
 
+export const listProductCategoriesQuerySchema = paginationQuerySchema.extend({
+  search: z.string().optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+});
+
 export type CreateProductCategoryInput = z.infer<
   typeof createProductCategorySchema
 >;
 export type UpdateProductCategoryInput = z.infer<
   typeof updateProductCategorySchema
+>;
+export type ListProductCategoriesQuery = z.infer<
+  typeof listProductCategoriesQuerySchema
 >;

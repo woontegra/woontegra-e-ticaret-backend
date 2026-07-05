@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import type { UserRole } from '@prisma/client';
 import { AppError } from '../lib/app-error.js';
 import { verifyAccessToken } from '../lib/jwt.js';
+import { prisma } from '../lib/prisma.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
 export interface AuthMiddlewareOptions {
@@ -29,11 +30,26 @@ export function authMiddleware(options: AuthMiddlewareOptions = {}) {
 
     const payload = verifyAccessToken(token);
 
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw AppError.unauthorized('Account is inactive or not found');
+    }
+
     req.user = {
-      id: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
     };
 
     next();

@@ -6,6 +6,8 @@ import {
   applyCouponSchema,
   createCampaignSchema,
   createCouponSchema,
+  listCouponsQuerySchema,
+  listCampaignsQuerySchema,
   updateCampaignSchema,
   updateCouponSchema,
 } from './promotion.schema.js';
@@ -13,8 +15,9 @@ import * as campaignService from './campaign.service.js';
 import * as couponService from './coupon.service.js';
 import * as cartCouponService from './cart-coupon.service.js';
 
-export async function listCoupons(_req: Request, res: Response) {
-  const data = await couponService.listCoupons();
+export async function listCoupons(req: Request, res: Response) {
+  const query = listCouponsQuerySchema.parse(req.query);
+  const data = await couponService.listCoupons(query);
   sendSuccess(res, data);
 }
 
@@ -35,8 +38,9 @@ export async function deleteCoupon(req: Request, res: Response) {
   sendSuccess(res, { ok: true });
 }
 
-export async function listCampaigns(_req: Request, res: Response) {
-  const data = await campaignService.listCampaigns();
+export async function listCampaigns(req: Request, res: Response) {
+  const query = listCampaignsQuerySchema.parse(req.query);
+  const data = await campaignService.listCampaigns(query);
   sendSuccess(res, data);
 }
 

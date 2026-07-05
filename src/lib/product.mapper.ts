@@ -3,12 +3,15 @@ import type {
   BrandDto,
   ProductCategoryDto,
   ProductDto,
+  ProductDownloadFilesConfig,
   PublicBrandSummaryDto,
   PublicProductCategoryDetailDto,
   PublicProductCategoryDto,
   PublicProductDetailDto,
   PublicProductDto,
 } from '../types/api.js';
+import { parseDownloadFiles } from './product-download-files.js';
+import { toPublicDownloadFiles } from './public-download-files.js';
 import { resolveMediaUrlMap } from './media-url.js';
 
 function parseStringArray(value: unknown): string[] {
@@ -87,6 +90,29 @@ type ProductWithRelations = Product & {
   brand?: Brand | null;
 };
 
+function mapProductCoreFields(product: Product) {
+  return {
+    productKind: product.productKind,
+    deliveryMode: product.deliveryMode,
+    purchaseEnabled: product.purchaseEnabled,
+    currency: product.currency,
+    compareAtPrice: decimalToNumber(product.compareAtPrice),
+    version: product.version,
+    featureBullets: parseStringArray(product.featureBullets),
+    sortOrder: product.sortOrder,
+    licenseRequired: product.licenseRequired,
+    licenseAppCode: product.licenseAppCode,
+    licenseDays: product.licenseDays,
+    licenseMonths: product.licenseMonths,
+    licenseMaxDevices: product.licenseMaxDevices,
+    saasAppCode: product.saasAppCode,
+    saasPlanCode: product.saasPlanCode,
+    saasTrialDays: product.saasTrialDays,
+    saasRequiresLogin: product.saasRequiresLogin,
+    downloadFiles: parseDownloadFiles(product.downloadFiles) as ProductDownloadFilesConfig,
+  };
+}
+
 export async function toProductDto(
   product: ProductWithRelations,
 ): Promise<ProductDto> {
@@ -105,7 +131,7 @@ export async function toProductDto(
     slug: product.slug,
     sku: product.sku,
     barcode: product.barcode,
-    productKind: product.productKind,
+    ...mapProductCoreFields(product),
     shortDescription: product.shortDescription,
     descriptionHtml: product.descriptionHtml,
     categoryId: product.categoryId,
@@ -186,7 +212,7 @@ export async function toProductDtos(
       slug: product.slug,
       sku: product.sku,
       barcode: product.barcode,
-      productKind: product.productKind,
+      ...mapProductCoreFields(product),
       shortDescription: product.shortDescription,
       descriptionHtml: product.descriptionHtml,
       categoryId: product.categoryId,
@@ -247,26 +273,27 @@ function getDisplayPrice(product: Product): number | null {
   return decimalToNumber(product.salePrice) ?? decimalToNumber(product.basePrice);
 }
 
-export async function toPublicProductDto(
-  product: ProductWithRelations,
-): Promise<PublicProductDto> {
-  const urlMap = await resolveMediaUrlMap([
-    product.mainImageId,
-    product.brand?.logoId,
-  ]);
-
+function mapPublicProductBase(product: ProductWithRelations) {
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
     shortDescription: product.shortDescription,
     productKind: product.productKind,
+    deliveryMode: product.deliveryMode,
+    purchaseEnabled: product.purchaseEnabled,
     price: getDisplayPrice(product),
     basePrice: decimalToNumber(product.basePrice),
     salePrice: decimalToNumber(product.salePrice),
-    imageUrl: product.mainImageId
-      ? (urlMap.get(product.mainImageId) ?? null)
-      : null,
+    compareAtPrice: decimalToNumber(product.compareAtPrice),
+    currency: product.currency,
+    taxRate: decimalToNumber(product.taxRate),
+    version: product.version,
+    featureBullets: parseStringArray(product.featureBullets),
+    licenseRequired: product.licenseRequired,
+    saasRequiresLogin: product.saasRequiresLogin,
+    seoTitle: product.seoTitle,
+    seoDescription: product.seoDescription,
     isFeatured: product.isFeatured,
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
@@ -284,10 +311,34 @@ export async function toPublicProductDto(
           id: product.brand.id,
           name: product.brand.name,
           slug: product.brand.slug,
-          logoUrl: product.brand.logoId
+          logoUrl: null as string | null,
+          description: product.brand.description,
+        }
+      : null,
+  };
+}
+
+export async function toPublicProductDto(
+  product: ProductWithRelations,
+): Promise<PublicProductDto> {
+  const urlMap = await resolveMediaUrlMap([
+    product.mainImageId,
+    product.brand?.logoId,
+  ]);
+
+  const base = mapPublicProductBase(product);
+
+  return {
+    ...base,
+    imageUrl: product.mainImageId
+      ? (urlMap.get(product.mainImageId) ?? null)
+      : null,
+    brand: base.brand
+      ? {
+          ...base.brand,
+          logoUrl: product.brand?.logoId
             ? (urlMap.get(product.brand.logoId) ?? null)
             : null,
-          description: product.brand.description,
         }
       : null,
   };
@@ -300,42 +351,23 @@ export async function toPublicProductDtos(
     products.flatMap((product) => [product.mainImageId, product.brand?.logoId]),
   );
 
-  return products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    shortDescription: product.shortDescription,
-    productKind: product.productKind,
-    price: getDisplayPrice(product),
-    basePrice: decimalToNumber(product.basePrice),
-    salePrice: decimalToNumber(product.salePrice),
-    imageUrl: product.mainImageId
-      ? (urlMap.get(product.mainImageId) ?? null)
-      : null,
-    isFeatured: product.isFeatured,
-    isNew: product.isNew,
-    isBestSeller: product.isBestSeller,
-    demoUrl: product.demoUrl,
-    purchaseUrl: product.purchaseUrl,
-    category: product.category
-      ? {
-          id: product.category.id,
-          name: product.category.name,
-          slug: product.category.slug,
-        }
-      : null,
-    brand: product.brand
-      ? {
-          id: product.brand.id,
-          name: product.brand.name,
-          slug: product.brand.slug,
-          logoUrl: product.brand.logoId
-            ? (urlMap.get(product.brand.logoId) ?? null)
-            : null,
-          description: product.brand.description,
-        }
-      : null,
-  }));
+  return products.map((product) => {
+    const base = mapPublicProductBase(product);
+    return {
+      ...base,
+      imageUrl: product.mainImageId
+        ? (urlMap.get(product.mainImageId) ?? null)
+        : null,
+      brand: base.brand
+        ? {
+            ...base.brand,
+            logoUrl: product.brand?.logoId
+              ? (urlMap.get(product.brand.logoId) ?? null)
+              : null,
+          }
+        : null,
+    };
+  });
 }
 
 export async function toPublicProductDetailDto(
@@ -357,7 +389,7 @@ export async function toPublicProductDetailDto(
     tags: parseStringArray(product.tags),
     demoUrl: product.demoUrl,
     purchaseUrl: product.purchaseUrl,
-    downloadUrl: product.downloadUrl,
+    downloadFiles: toPublicDownloadFiles(product.downloadFiles),
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
     ogImageUrl: product.ogImageId

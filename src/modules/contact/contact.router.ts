@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { publicWriteRateLimiter } from '../../middlewares/rate-limit.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as contactController from './contact.controller.js';
 
@@ -11,13 +12,14 @@ export const formSubmissionsAdminRouter = Router();
 const staffRoles = requireRoles(
   'SUPER_ADMIN',
   'ADMIN',
-  'ADMIN',
+  'EDITOR',
   'STAFF',
 );
 const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 
 contactPublicRouter.post(
   '/',
+  publicWriteRateLimiter,
   asyncHandler(contactController.submitContact),
 );
 contactPublicRouter.get(
@@ -26,6 +28,7 @@ contactPublicRouter.get(
 );
 contactPublicRouter.post(
   '/forms/:key/submit',
+  publicWriteRateLimiter,
   asyncHandler(contactController.submitPublicForm),
 );
 

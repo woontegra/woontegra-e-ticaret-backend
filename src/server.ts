@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { createApp } from './app.js';
 import { env } from './config/index.js';
-import { seedDatabase, seedDefaultFooter, seedDefaultHeader, seedDefaultHomeLayout, seedDefaultMenus, seedDefaultTheme, seedLegalPages } from './db/seed-data.js';
+import { seedDatabase, seedDefaultContactForm, seedDefaultFooter, seedDefaultFooterColumns, seedDefaultHeader, seedDefaultHomeLayout, seedDefaultMenus, seedDefaultPaymentMethods, seedDefaultShippingCarrier, seedDefaultStorefrontUi, seedDefaultTheme, seedDemoCatalog, seedLegalPages, seedStorefrontCmsPages } from './db/seed-data.js';
 import { prisma } from './lib/prisma.js';
 
 const app = createApp();
@@ -74,6 +74,27 @@ async function start() {
           console.log('[api] No home layout — seeding home draft...');
           await seedDefaultHomeLayout(prisma);
         }
+        const productCount = await prisma.product.count();
+        if (productCount === 0) {
+          await seedDemoCatalog(prisma);
+        }
+        const footerColumnCount = await prisma.footerColumn.count();
+        if (footerColumnCount === 0) {
+          await seedDefaultFooterColumns(prisma);
+        }
+        const carrierCount = await prisma.shippingCarrier.count();
+        if (carrierCount === 0) {
+          await seedDefaultShippingCarrier(prisma);
+        }
+        const activePayments = await prisma.paymentMethod.count({
+          where: { isActive: true },
+        });
+        if (activePayments === 0) {
+          await seedDefaultPaymentMethods(prisma);
+        }
+        await seedStorefrontCmsPages(prisma);
+        await seedDefaultContactForm(prisma);
+        await seedDefaultStorefrontUi(prisma);
       }
     }
   } catch (error) {

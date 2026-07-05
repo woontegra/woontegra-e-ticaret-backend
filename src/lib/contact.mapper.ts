@@ -78,6 +78,8 @@ export function toFormDefinitionDto(form: FormDefinition): FormDefinitionDto {
     name: form.name,
     key: form.key,
     fields: parseFormFields(form.fields),
+    successMessage: form.successMessage,
+    submitButtonLabel: form.submitButtonLabel,
     isActive: form.isActive,
     createdAt: form.createdAt.toISOString(),
     updatedAt: form.updatedAt.toISOString(),
@@ -93,6 +95,8 @@ export function toFormDefinitionPublicDto(
     name: dto.name,
     key: dto.key,
     fields: dto.fields,
+    successMessage: dto.successMessage,
+    submitButtonLabel: dto.submitButtonLabel,
   };
 }
 

@@ -2,6 +2,7 @@ import type { PaymentMethod, Prisma } from '@prisma/client';
 import { AppError } from '../../lib/app-error.js';
 import {
   DEFAULT_PAYMENT_METHODS,
+  mergePaymentMethodConfig,
   toPaymentMethodDto,
   toPublicPaymentMethodDto,
 } from '../../lib/payment.mapper.js';
@@ -33,14 +34,14 @@ export async function listPaymentMethods() {
   const methods = await prisma.paymentMethod.findMany({
     orderBy: { type: 'asc' },
   });
-  return methods.map(toPaymentMethodDto);
+  return methods.map((method) => toPaymentMethodDto(method, { maskSecrets: true }));
 }
 
 export async function getPaymentMethodById(id: string) {
   await ensureDefaultPaymentMethods();
   const method = await prisma.paymentMethod.findUnique({ where: { id } });
   if (!method) throw AppError.notFound('Payment method not found');
-  return toPaymentMethodDto(method);
+  return toPaymentMethodDto(method, { maskSecrets: true });
 }
 
 export async function updatePaymentMethod(
@@ -56,9 +57,14 @@ export async function updatePaymentMethod(
 
   let config: Prisma.InputJsonValue = existing.config as Prisma.InputJsonValue;
   if (parsed.config !== undefined) {
+    const merged = mergePaymentMethodConfig(
+      existing.type,
+      existing.config,
+      parsed.config,
+    );
     config = validatePaymentMethodConfig(
       existing.type,
-      parsed.config,
+      merged,
     ) as Prisma.InputJsonValue;
   }
 
@@ -72,7 +78,7 @@ export async function updatePaymentMethod(
     },
   });
 
-  return toPaymentMethodDto(method);
+  return toPaymentMethodDto(method, { maskSecrets: true });
 }
 
 export async function listPublicPaymentMethods() {

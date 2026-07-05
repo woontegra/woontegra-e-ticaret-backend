@@ -3,6 +3,7 @@ import { sendCreated, sendNoContent, sendSuccess } from '../../lib/response.js';
 import {
   listMediaQuerySchema,
   updateMediaSchema,
+  uploadDownloadBodySchema,
   uploadMediaBodySchema,
 } from './media.schema.js';
 import * as mediaService from './media.service.js';
@@ -21,6 +22,24 @@ export async function listFolders(_req: Request, res: Response) {
 export async function getMedia(req: Request, res: Response) {
   const data = await mediaService.getMediaById(req.params.id);
   sendSuccess(res, data);
+}
+
+export async function uploadDownloadMedia(req: Request, res: Response) {
+  if (!req.file) {
+    res.status(400).json({
+      errors: [{ code: 'FILE_REQUIRED', message: 'Dosya gerekli' }],
+    });
+    return;
+  }
+
+  const body = uploadDownloadBodySchema.parse(req.body);
+  const data = await mediaService.uploadDownloadMedia({
+    file: req.file,
+    folder: body.folder ?? 'products',
+    createdById: req.user?.id,
+  });
+
+  sendCreated(res, data);
 }
 
 export async function uploadMedia(req: Request, res: Response) {

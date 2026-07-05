@@ -1,4 +1,5 @@
 import { PageStatus, ProductStatus } from '@prisma/client';
+import { resolvePublicSiteUrl } from '../../lib/public-url.js';
 import { prisma } from '../../lib/prisma.js';
 import { getSeoSettingRecord } from './seo-setting.service.js';
 
@@ -17,12 +18,7 @@ async function resolveBaseUrl(): Promise<string> {
     prisma.siteSetting.findUnique({ where: { id: 'default' } }),
   ]);
 
-  const base =
-    seo.canonicalBaseUrl?.replace(/\/$/, '') ||
-    site?.domain?.replace(/\/$/, '') ||
-    '';
-
-  return base;
+  return resolvePublicSiteUrl(seo.canonicalBaseUrl, site?.domain);
 }
 
 export async function generateRobotsTxt(): Promise<string> {
@@ -92,7 +88,7 @@ export async function generateSitemapXml(): Promise<string> {
         .then((products) => {
           for (const product of products) {
             const prefix =
-              product.productKind === 'SOFTWARE' ? '/yazilim' : '/urun';
+              product.productKind === 'SOFTWARE' ? '/yazilimlar' : '/urun';
             urls.push({
               loc: `${baseUrl}${prefix}/${product.slug}`,
               lastmod: product.updatedAt.toISOString(),

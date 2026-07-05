@@ -173,6 +173,35 @@ export const DEFAULT_MAIL_TEMPLATES: DefaultMailTemplate[] = [
       { name: 'siteName', description: 'Site adı' },
     ],
   },
+  {
+    key: 'DIGITAL_DOWNLOAD_READY',
+    name: 'Dijital indirme hazır',
+    subject: 'Woontegra Kurulum Dosyalarınız Hazır',
+    htmlContent: `<div style="${baseStyle}">
+<p>Merhaba {{customerName}},</p>
+<p><strong>{{orderNumber}}</strong> numaralı siparişiniz için indirme bağlantılarınız hazır.</p>
+<p>Ürün: <strong>{{productName}}</strong></p>
+{{downloadLinksHtml}}
+<p>Bağlantılar <strong>{{expiresAt}}</strong> tarihine kadar geçerlidir.</p>
+<p>{{licenseNote}}</p>
+<p>Sorularınız için: <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+<p>Teşekkür ederiz,<br>{{siteName}}</p>
+</div>`,
+    textContent:
+      'Merhaba {{customerName}},\n\n{{orderNumber}} siparişiniz için indirme bağlantılarınız hazır.\n\nÜrün: {{productName}}\n\n{{downloadLinksText}}\n\nBağlantılar {{expiresAt}} tarihine kadar geçerlidir.\n\n{{licenseNote}}\n\nDestek: {{supportEmail}}\n\n{{siteName}}',
+    variables: [
+      { name: 'customerName', description: 'Müşteri adı' },
+      { name: 'orderNumber', description: 'Sipariş numarası' },
+      { name: 'productName', description: 'Ürün adı' },
+      { name: 'downloadLinks', description: 'İndirme bağlantıları (metin)' },
+      { name: 'downloadLinksHtml', description: 'İndirme bağlantıları HTML' },
+      { name: 'downloadLinksText', description: 'İndirme bağlantıları düz metin' },
+      { name: 'expiresAt', description: 'Link geçerlilik tarihi' },
+      { name: 'supportEmail', description: 'Destek e-postası' },
+      { name: 'licenseNote', description: 'Lisans notu' },
+      { name: 'siteName', description: 'Site adı' },
+    ],
+  },
 ];
 
 export function defaultTemplateSeedData(): Array<{

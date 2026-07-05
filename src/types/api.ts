@@ -25,6 +25,164 @@ export interface SocialLinks {
   tiktok?: string;
 }
 
+export interface StorefrontUiLabels {
+  productBadgeNew?: string;
+  productBadgeFeatured?: string;
+  productBadgeBestSeller?: string;
+  productActionDetail?: string;
+  productActionDemo?: string;
+  productActionBuy?: string;
+  productActionDownload?: string;
+  emptyProducts?: string;
+  emptyCategories?: string;
+  emptyBlog?: string;
+  notFoundMessage?: string;
+  notFoundHomeLink?: string;
+  pageNotFoundMessage?: string;
+  pageNotFoundHomeLink?: string;
+  pageNotFoundTitle?: string;
+  blogNotFoundMessage?: string;
+  blogNotFoundBackLink?: string;
+  blogPostNotFoundMessage?: string;
+  blogPostNotFoundBackLink?: string;
+  blogIndexEmpty?: string;
+  readingTimeSuffix?: string;
+  contactFormLoading?: string;
+  contactFormError?: string;
+  contactFormSubmitting?: string;
+  contactFormNotFound?: string;
+  contactBackLink?: string;
+  formSelectPlaceholder?: string;
+  productNotFound?: string;
+  brandNotFound?: string;
+  categoryNotFound?: string;
+  productListBackLink?: string;
+  productBackLink?: string;
+  productAddToCart?: string;
+  productAddToCartPending?: string;
+  productAddToCartError?: string;
+  productQuantityLabel?: string;
+  blogBackLink?: string;
+  cartEmpty?: string;
+  cartBackLink?: string;
+  cartCheckoutButton?: string;
+  checkoutBackLink?: string;
+  orderNotFound?: string;
+  orderSuccessHomeLink?: string;
+  orderTrackingNotFound?: string;
+  orderTrackingNoShipment?: string;
+  orderTrackingBackLink?: string;
+  catalogSortFeatured?: string;
+  catalogSortNewest?: string;
+  catalogSortPriceAsc?: string;
+  catalogSortPriceDesc?: string;
+  catalogEmpty?: string;
+  catalogLoading?: string;
+  catalogResultsSuffix?: string;
+  cartQuantityLabel?: string;
+  cartRemoveLabel?: string;
+  cartSummaryTitle?: string;
+  cartSubtotal?: string;
+  cartTax?: string;
+  cartTotal?: string;
+  checkoutContactTitle?: string;
+  checkoutNameLabel?: string;
+  checkoutEmailLabel?: string;
+  checkoutPhoneLabel?: string;
+  checkoutNoteLabel?: string;
+  checkoutPaymentTitle?: string;
+  checkoutNoPaymentMethods?: string;
+  checkoutTestMode?: string;
+  checkoutBankAccountsTitle?: string;
+  checkoutSubmitPending?: string;
+  checkoutSubmit?: string;
+  checkoutOrderSummary?: string;
+  checkoutCouponLabel?: string;
+  checkoutCouponRemove?: string;
+  checkoutCouponPlaceholder?: string;
+  checkoutCouponApplied?: string;
+  checkoutCouponError?: string;
+  checkoutCouponApply?: string;
+  checkoutSubtotal?: string;
+  checkoutTax?: string;
+  checkoutDiscount?: string;
+  checkoutTotal?: string;
+  checkoutErrorGeneric?: string;
+  checkoutPaymentRequired?: string;
+  checkoutBankAccountCount?: string;
+  orderNumberLabel?: string;
+  orderBankTransferTitle?: string;
+  orderBankTransferHint?: string;
+  orderBranchLabel?: string;
+  orderTrackingTitle?: string;
+  orderTrackingNumberLabel?: string;
+  orderTrackShipment?: string;
+  orderSummaryTitle?: string;
+  orderTotalLabel?: string;
+  orderTrackLink?: string;
+  orderContinueShopping?: string;
+  orderTrackingFormNumberLabel?: string;
+  orderTrackingFormNumberPlaceholder?: string;
+  orderTrackingFormEmailLabel?: string;
+  orderTrackingFormEmailPlaceholder?: string;
+  orderTrackingFormSubmit?: string;
+  orderTrackingShipmentTitle?: string;
+  orderTrackingCarrierLabel?: string;
+  orderTrackingNumberFieldLabel?: string;
+  catalogFiltersTitle?: string;
+  catalogFilterButton?: string;
+  catalogGridView?: string;
+  catalogListView?: string;
+  catalogPrev?: string;
+  catalogNext?: string;
+  catalogCloseFilters?: string;
+  catalogShowResults?: string;
+  catalogSearchLabel?: string;
+  catalogSearchPlaceholder?: string;
+  catalogCategoryLabel?: string;
+  catalogAllOption?: string;
+  catalogBrandLabel?: string;
+  catalogPriceRangeLabel?: string;
+  catalogPriceMin?: string;
+  catalogPriceMax?: string;
+  catalogProductCountSuffix?: string;
+  productAttributesTitle?: string;
+  productVariantOutOfStock?: string;
+  productVariantStock?: string;
+  productVariantUnavailable?: string;
+  cartAddedTitle?: string;
+  cartAddedQuantity?: string;
+  cartAddedTotal?: string;
+  cartAddedGoToCart?: string;
+  cartAddedContinue?: string;
+  reviewsTitle?: string;
+  reviewsCount?: string;
+  reviewsEmpty?: string;
+  reviewsLoading?: string;
+  reviewsStoreReply?: string;
+  reviewsPrev?: string;
+  reviewsNext?: string;
+  reviewsWriteTitle?: string;
+  reviewsModerationNote?: string;
+  reviewsThankYou?: string;
+  reviewsRatingLabel?: string;
+  reviewsNameLabel?: string;
+  reviewsEmailLabel?: string;
+  reviewsTitleLabel?: string;
+  reviewsCommentLabel?: string;
+  reviewsSubmitPending?: string;
+  reviewsSubmit?: string;
+  reviewsSubmitError?: string;
+}
+
+export interface ContactLabels {
+  company?: string;
+  phone?: string;
+  email?: string;
+  support?: string;
+  workingHours?: string;
+}
+
 export interface SiteSettingDto {
   id: string;
   siteName: string;
@@ -39,6 +197,7 @@ export interface SiteSettingDto {
   logoUrl: string | null;
   faviconUrl: string | null;
   ogImageUrl: string | null;
+  storefrontUi: StorefrontUiLabels;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +217,8 @@ export interface CompanySettingDto {
   email: string;
   supportEmail: string;
   workingHours: string;
+  contactFormKey: string | null;
+  contactLabels: ContactLabels;
   currency: string;
   defaultTaxRate: number;
   socialLinks: SocialLinks;
@@ -73,12 +234,26 @@ export interface MediaAssetDto {
   size: number;
   width: number | null;
   height: number | null;
-  url: string;
+  storageProvider: 'LOCAL' | 'VERCEL_BLOB' | 'R2';
+  usageType:
+    | 'IMAGE'
+    | 'LOGO'
+    | 'FAVICON'
+    | 'HERO_IMAGE'
+    | 'PRODUCT_IMAGE'
+    | 'BLOG_IMAGE'
+    | 'BUILDER_IMAGE'
+    | 'CAMPAIGN_IMAGE'
+    | 'DOCUMENT'
+    | 'DOWNLOAD_BINARY'
+    | null;
+  bucket: string | null;
   storageKey: string;
+  url: string;
+  publicUrl: string | null;
   folder: string;
   altText: string | null;
   title: string | null;
-  usageType: string | null;
   createdById: string | null;
   createdAt: string;
   updatedAt: string;
@@ -170,6 +345,7 @@ export type MenuLocation = 'HEADER' | 'FOOTER' | 'MOBILE';
 export type MenuItemType =
   | 'PAGE'
   | 'CATEGORY'
+  | 'PRODUCT_CATEGORY'
   | 'PRODUCT'
   | 'BLOG'
   | 'CUSTOM_URL';
@@ -244,6 +420,11 @@ export interface FooterSettingDto {
   email: string | null;
   address: string | null;
   showNewsletter: boolean;
+  newsletterTitle: string | null;
+  newsletterDescription: string | null;
+  newsletterPlaceholder: string | null;
+  newsletterButtonLabel: string | null;
+  newsletterSuccessMessage: string | null;
   copyrightText: string | null;
   socialLinks: SocialLinks;
   paymentIconIds: string[];
@@ -299,6 +480,11 @@ export interface PublicFooterDto {
   email: string | null;
   address: string | null;
   showNewsletter: boolean;
+  newsletterTitle: string | null;
+  newsletterDescription: string | null;
+  newsletterPlaceholder: string | null;
+  newsletterButtonLabel: string | null;
+  newsletterSuccessMessage: string | null;
   copyrightText: string | null;
   socialLinks: SocialLinks;
   paymentIcons: FooterMediaIconDto[];
@@ -408,6 +594,10 @@ export interface HeaderSettingDto {
   announcementEnabled: boolean;
   announcementText: string | null;
   announcementLink: string | null;
+  accountUrl: string | null;
+  searchPlaceholder: string | null;
+  cartUrl: string | null;
+  favoritesUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -483,6 +673,37 @@ export interface ReorderLayoutBlocksInput {
 export type ProductKind = 'SOFTWARE' | 'PHYSICAL' | 'SERVICE';
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'PASSIVE';
 
+export type DeliveryMode =
+  | 'NONE'
+  | 'FREE_DOWNLOAD'
+  | 'PAID_DOWNLOAD'
+  | 'LICENSED_DOWNLOAD'
+  | 'SAAS'
+  | 'QUOTE_ONLY';
+
+export interface ProductDownloadFile {
+  label: string;
+  url?: string;
+  type?: 'setup' | 'portable' | 'other';
+  mediaAssetId?: string;
+  storageProvider?: 'LOCAL' | 'VERCEL_BLOB' | 'R2';
+  storageKey?: string;
+  fileName?: string;
+  originalName?: string;
+  mimeType?: string;
+  version?: string;
+  size?: string;
+  sha256?: string;
+  buttonLabel?: string;
+}
+
+export interface ProductDownloadFilesConfig {
+  version?: string;
+  publicFreeDownload?: boolean;
+  showAfterPaymentOnly?: boolean;
+  files?: ProductDownloadFile[];
+}
+
 export interface ProductCategoryDto {
   id: string;
   parentId: string | null;
@@ -536,6 +757,23 @@ export interface ProductDto {
   sku: string | null;
   barcode: string | null;
   productKind: ProductKind;
+  deliveryMode: DeliveryMode;
+  purchaseEnabled: boolean;
+  currency: string;
+  compareAtPrice: number | null;
+  version: string | null;
+  featureBullets: string[];
+  sortOrder: number;
+  licenseRequired: boolean;
+  licenseAppCode: string | null;
+  licenseDays: number | null;
+  licenseMonths: number | null;
+  licenseMaxDevices: number | null;
+  saasAppCode: string | null;
+  saasPlanCode: string | null;
+  saasTrialDays: number | null;
+  saasRequiresLogin: boolean;
+  downloadFiles: ProductDownloadFilesConfig | null;
   shortDescription: string | null;
   descriptionHtml: string;
   categoryId: string | null;
@@ -611,9 +849,20 @@ export interface PublicProductDto {
   slug: string;
   shortDescription: string | null;
   productKind: ProductKind;
+  deliveryMode: DeliveryMode;
+  purchaseEnabled: boolean;
   price: number | null;
   basePrice: number | null;
   salePrice: number | null;
+  compareAtPrice: number | null;
+  currency: string;
+  taxRate: number | null;
+  version: string | null;
+  featureBullets: string[];
+  licenseRequired: boolean;
+  saasRequiresLogin: boolean;
+  seoTitle: string | null;
+  seoDescription: string | null;
   imageUrl: string | null;
   isFeatured: boolean;
   isNew: boolean;
@@ -635,13 +884,28 @@ export interface PublicCatalogListResult<T> {
   total: number;
 }
 
+export interface PublicDownloadFileDto {
+  label: string;
+  type?: 'setup' | 'portable' | 'other';
+  buttonLabel?: string;
+  version?: string;
+  size?: string;
+  available?: boolean;
+}
+
+export interface PublicDownloadFilesDto {
+  version?: string;
+  publicFreeDownload?: boolean;
+  files?: PublicDownloadFileDto[];
+}
+
 export interface PublicProductDetailDto extends PublicProductDto {
   descriptionHtml: string;
   galleryImageUrls: string[];
   tags: string[];
   demoUrl: string | null;
   purchaseUrl: string | null;
-  downloadUrl: string | null;
+  downloadFiles: PublicDownloadFilesDto | null;
   seoTitle: string | null;
   seoDescription: string | null;
   ogImageUrl: string | null;
@@ -826,12 +1090,16 @@ export interface PaytrConfig {
   merchantId: string;
   merchantKey: string;
   merchantSalt: string;
+  hasMerchantKey?: boolean;
+  hasMerchantSalt?: boolean;
 }
 
 export interface IyzicoConfig {
   apiKey: string;
   secretKey: string;
   baseUrl?: string;
+  hasApiKey?: boolean;
+  hasSecretKey?: boolean;
 }
 
 export interface ExternalLinkConfig {
@@ -883,9 +1151,43 @@ export interface CheckoutPaymentInfoDto {
   message?: string | null;
 }
 
+export interface OrderFulfillmentDto {
+  deliveryModes: DeliveryMode[];
+  messages: string[];
+  downloadLinks?: PublicDownloadLinkDto[];
+}
+
+export interface PublicDownloadLinkDto {
+  productName: string;
+  fileType: string | null;
+  label: string;
+  downloadUrl?: string;
+  expiresAt?: string;
+  note?: string;
+}
+
+export interface OrderDigitalDeliveryItemDto {
+  orderItemId: string;
+  productName: string;
+  deliveryMode: DeliveryMode;
+  deliveryStatus: OrderItemDeliveryStatus | null;
+  deliveryError: string | null;
+  downloadTokenCreatedAt: string | null;
+  downloadEmailSentAt: string | null;
+  tokenCount: number;
+  canFulfill: boolean;
+}
+
+export type OrderItemDeliveryStatus =
+  | 'PENDING'
+  | 'READY'
+  | 'SENT'
+  | 'FAILED';
+
 export interface CheckoutResultDto {
   order: PublicOrderDto;
   payment: CheckoutPaymentInfoDto;
+  fulfillment?: OrderFulfillmentDto;
 }
 
 export type ShippingStatus =
@@ -1002,9 +1304,12 @@ export interface OrderDto {
   items: OrderItemDto[];
   createdAt: string;
   updatedAt: string;
+  digitalDelivery?: OrderDigitalDeliveryItemDto[];
 }
 
-export type PublicOrderDto = Omit<OrderDto, 'adminNote'>;
+export type PublicOrderDto = Omit<OrderDto, 'adminNote'> & {
+  fulfillment?: OrderFulfillmentDto;
+};
 
 export interface OrderSummaryDto {
   id: string;
@@ -1134,6 +1439,8 @@ export interface FormDefinitionDto {
   name: string;
   key: string;
   fields: FormFieldDefinitionDto[];
+  successMessage: string | null;
+  submitButtonLabel: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -1144,6 +1451,8 @@ export interface FormDefinitionPublicDto {
   name: string;
   key: string;
   fields: FormFieldDefinitionDto[];
+  successMessage: string | null;
+  submitButtonLabel: string | null;
 }
 
 export interface FormSubmissionDto {

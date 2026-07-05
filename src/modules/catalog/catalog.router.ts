@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { validateSlugParam } from '../../middlewares/validate-slug.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as catalogController from './catalog.controller.js';
 
@@ -13,7 +14,7 @@ const adminRoles = requireRoles('SUPER_ADMIN', 'ADMIN', 'EDITOR');
 const productAdminRoles = requireRoles(
   'SUPER_ADMIN',
   'ADMIN',
-  'ADMIN',
+  'EDITOR',
   'STAFF',
 );
 
@@ -124,6 +125,7 @@ catalogPublicRouter.get(
 );
 catalogPublicRouter.get(
   '/brands/:slug',
+  validateSlugParam(),
   asyncHandler(catalogController.getPublicBrand),
 );
 catalogPublicRouter.get(
@@ -136,6 +138,7 @@ catalogPublicRouter.get(
 );
 catalogPublicRouter.get(
   '/products/:slug',
+  validateSlugParam(),
   asyncHandler(catalogController.getPublicProduct),
 );
 catalogPublicRouter.get(
@@ -144,5 +147,6 @@ catalogPublicRouter.get(
 );
 catalogPublicRouter.get(
   '/categories/:slug',
+  validateSlugParam(),
   asyncHandler(catalogController.getPublicCategory),
 );

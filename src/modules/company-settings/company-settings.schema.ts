@@ -28,6 +28,16 @@ export const updateCompanySettingSchema = z.object({
   currency: z.string().length(3).optional(),
   defaultTaxRate: z.coerce.number().min(0).max(100).optional(),
   socialLinks: socialLinksSchema,
+  contactFormKey: z.string().max(80).nullable().optional(),
+  contactLabels: z
+    .object({
+      company: z.string().max(80).optional(),
+      phone: z.string().max(80).optional(),
+      email: z.string().max(80).optional(),
+      support: z.string().max(80).optional(),
+      workingHours: z.string().max(80).optional(),
+    })
+    .optional(),
 });
 
 export type UpdateCompanySettingInput = z.infer<typeof updateCompanySettingSchema>;

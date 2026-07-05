@@ -23,6 +23,10 @@ export const DEFAULT_HEADER_SETTINGS: Omit<
   announcementEnabled: false,
   announcementText: null,
   announcementLink: null,
+  accountUrl: null,
+  searchPlaceholder: null,
+  cartUrl: null,
+  favoritesUrl: null,
 };
 
 export const HEADER_LOGO_POSITION_LABELS: Record<HeaderLogoPosition, string> = {

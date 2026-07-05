@@ -46,7 +46,9 @@ export function toPageLayoutDto(
   };
 }
 
-export function toPublicPageBlockDto(block: PageBlock): PublicPageBlockDto {
+export function toPublicPageBlockDto(
+  block: Pick<PageBlock, 'id' | 'type' | 'title' | 'settings' | 'content'>,
+): PublicPageBlockDto {
   return {
     id: block.id,
     type: block.type,
@@ -57,8 +59,14 @@ export function toPublicPageBlockDto(block: PageBlock): PublicPageBlockDto {
 }
 
 export function toPublicHomeLayoutDto(
-  layout: PageLayout,
-  blocks: PageBlock[],
+  layout: Pick<
+    PageLayout,
+    'id' | 'name' | 'layoutType' | 'publishedAt'
+  >,
+  blocks: Pick<
+    PageBlock,
+    'id' | 'type' | 'title' | 'settings' | 'content'
+  >[],
 ): PublicHomeLayoutDto {
   return {
     id: layout.id,

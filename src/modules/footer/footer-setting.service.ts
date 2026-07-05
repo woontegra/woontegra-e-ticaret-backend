@@ -38,6 +38,21 @@ export async function updateFooterSettings(input: UpdateFooterSettingInput) {
       ...(input.showNewsletter !== undefined
         ? { showNewsletter: input.showNewsletter }
         : {}),
+      ...(input.newsletterTitle !== undefined
+        ? { newsletterTitle: input.newsletterTitle }
+        : {}),
+      ...(input.newsletterDescription !== undefined
+        ? { newsletterDescription: input.newsletterDescription }
+        : {}),
+      ...(input.newsletterPlaceholder !== undefined
+        ? { newsletterPlaceholder: input.newsletterPlaceholder }
+        : {}),
+      ...(input.newsletterButtonLabel !== undefined
+        ? { newsletterButtonLabel: input.newsletterButtonLabel }
+        : {}),
+      ...(input.newsletterSuccessMessage !== undefined
+        ? { newsletterSuccessMessage: input.newsletterSuccessMessage }
+        : {}),
       ...(input.copyrightText !== undefined
         ? { copyrightText: input.copyrightText }
         : {}),
@@ -95,6 +110,11 @@ export async function getPublicFooter(): Promise<PublicFooterDto> {
     email: settingDto.email,
     address: settingDto.address,
     showNewsletter: settingDto.showNewsletter,
+    newsletterTitle: settingDto.newsletterTitle,
+    newsletterDescription: settingDto.newsletterDescription,
+    newsletterPlaceholder: settingDto.newsletterPlaceholder,
+    newsletterButtonLabel: settingDto.newsletterButtonLabel,
+    newsletterSuccessMessage: settingDto.newsletterSuccessMessage,
     copyrightText: settingDto.copyrightText,
     socialLinks: settingDto.socialLinks,
     paymentIcons: settingDto.paymentIcons,

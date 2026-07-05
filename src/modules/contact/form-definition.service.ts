@@ -13,6 +13,7 @@ import type {
   UpdateFormDefinitionInput,
 } from './contact.schema.js';
 import { formFieldSchema } from './contact.schema.js';
+import { notifyNewContactMessage } from '../notifications/notification.service.js';
 
 async function ensureUniqueFormKey(key: string, excludeId?: string) {
   const existing = await prisma.formDefinition.findFirst({
@@ -58,6 +59,8 @@ export async function createFormDefinition(input: CreateFormDefinitionInput) {
       name: input.name,
       key: input.key,
       fields: fields as unknown as Prisma.InputJsonValue,
+      successMessage: input.successMessage ?? null,
+      submitButtonLabel: input.submitButtonLabel ?? null,
       isActive: input.isActive ?? true,
     },
   });
@@ -88,6 +91,12 @@ export async function updateFormDefinition(
         ? { fields: fields as unknown as Prisma.InputJsonValue }
         : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+      ...(input.successMessage !== undefined
+        ? { successMessage: input.successMessage }
+        : {}),
+      ...(input.submitButtonLabel !== undefined
+        ? { submitButtonLabel: input.submitButtonLabel }
+        : {}),
     },
   });
 
@@ -148,7 +157,7 @@ export async function submitFormByKey(key: string, input: SubmitFormInput) {
       .join('\n');
 
   if (email && message) {
-    await prisma.contactMessage.create({
+    const contactMessage = await prisma.contactMessage.create({
       data: {
         name: String(name),
         email: String(email),
@@ -159,6 +168,7 @@ export async function submitFormByKey(key: string, input: SubmitFormInput) {
         formKey: form.key,
       },
     });
+    notifyNewContactMessage(contactMessage);
   }
 
   return toFormSubmissionDto(submission);

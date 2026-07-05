@@ -2,7 +2,8 @@ import { AppError } from '../../lib/app-error.js';
 import { toBrandDtoWithUrls } from '../../lib/product.mapper.js';
 import { prisma } from '../../lib/prisma.js';
 import { slugify } from '../../lib/slug.js';
-import type { CreateBrandInput, UpdateBrandInput } from './brand.schema.js';
+import type { CreateBrandInput, ListBrandsQuery, UpdateBrandInput } from './brand.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
 async function resolveUniqueBrandSlug(
   name: string,
@@ -27,12 +28,35 @@ async function resolveUniqueBrandSlug(
   }
 }
 
-export async function listBrands() {
-  const brands = await prisma.brand.findMany({
-    orderBy: { name: 'asc' },
-  });
+export async function listBrands(query: ListBrandsQuery = {}) {
+  const where = {
+    ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+    ...(query.search
+      ? {
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' as const } },
+            { slug: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
 
-  return Promise.all(brands.map(toBrandDtoWithUrls));
+  const { skip, limit } = resolvePagination(query);
+
+  const [brands, total] = await Promise.all([
+    prisma.brand.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      skip,
+      take: limit,
+    }),
+    prisma.brand.count({ where }),
+  ]);
+
+  return {
+    items: await Promise.all(brands.map(toBrandDtoWithUrls)),
+    total,
+  };
 }
 
 export async function getBrandById(id: string) {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { validateSlugParam } from '../../middlewares/validate-slug.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as pagesController from './pages.controller.js';
 
@@ -18,4 +19,8 @@ pagesAdminRouter.post('/:id/unpublish', asyncHandler(pagesController.unpublishPa
 
 export const pagesPublicRouter = Router();
 
-pagesPublicRouter.get('/:slug', asyncHandler(pagesController.getPublicPage));
+pagesPublicRouter.get(
+  '/:slug',
+  validateSlugParam(),
+  asyncHandler(pagesController.getPublicPage),
+);

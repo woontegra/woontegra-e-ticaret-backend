@@ -65,6 +65,14 @@ export async function updateHeaderSettings(input: UpdateHeaderSettingInput) {
       ...(input.announcementLink !== undefined
         ? { announcementLink: input.announcementLink }
         : {}),
+      ...(input.accountUrl !== undefined ? { accountUrl: input.accountUrl } : {}),
+      ...(input.searchPlaceholder !== undefined
+        ? { searchPlaceholder: input.searchPlaceholder }
+        : {}),
+      ...(input.cartUrl !== undefined ? { cartUrl: input.cartUrl } : {}),
+      ...(input.favoritesUrl !== undefined
+        ? { favoritesUrl: input.favoritesUrl }
+        : {}),
     },
     create: {
       id: SETTINGS_SINGLETON_ID,

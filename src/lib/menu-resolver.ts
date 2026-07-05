@@ -36,9 +36,25 @@ export async function resolveMenuItemHref(
       return category ? `/blog?category=${category.slug}` : null;
     }
 
+    case 'PRODUCT_CATEGORY': {
+      if (!item.targetId) return null;
+      const category = await prisma.productCategory.findFirst({
+        where: { id: item.targetId, isActive: true },
+        select: { slug: true },
+      });
+      return category ? `/kategori/${category.slug}` : null;
+    }
+
     case 'PRODUCT': {
       if (!item.targetId) return null;
-      return `/urun/${item.targetId}`;
+      const product = await prisma.product.findFirst({
+        where: { id: item.targetId, status: 'ACTIVE' },
+        select: { slug: true, productKind: true },
+      });
+      if (!product) return null;
+      return product.productKind === 'SOFTWARE'
+        ? `/yazilim/${product.slug}`
+        : `/urun/${product.slug}`;
     }
 
     default:
@@ -66,7 +82,8 @@ export function isExternalHref(href: string): boolean {
 
 export const MENU_ITEM_TYPE_LABELS: Record<MenuItemType, string> = {
   PAGE: 'Sayfa',
-  CATEGORY: 'Kategori',
+  CATEGORY: 'Blog kategorisi',
+  PRODUCT_CATEGORY: 'Ürün kategorisi',
   PRODUCT: 'Ürün',
   BLOG: 'Blog yazısı',
   CUSTOM_URL: 'Özel URL',

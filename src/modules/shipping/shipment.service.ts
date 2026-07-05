@@ -4,7 +4,12 @@ import { toOrderDto } from '../../lib/order.mapper.js';
 import { toShipmentDto } from '../../lib/shipping.mapper.js';
 import { buildTrackingUrl } from '../../lib/tracking-url.js';
 import { prisma } from '../../lib/prisma.js';
-import { notifyShippingTrackingEntered } from '../notifications/notification.service.js';import type { UpdateOrderShipmentInput } from './shipping.schema.js';
+import { notifyShippingTrackingEntered } from '../notifications/notification.service.js';
+import {
+  sendOrderDeliveredEmail,
+  sendOrderShippedEmail,
+} from '../mail/mail-order.service.js';
+import type { UpdateOrderShipmentInput } from './shipping.schema.js';
 
 const orderInclude = {
   items: true,
@@ -49,14 +54,14 @@ export async function upsertOrderShipment(
 ) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { shipment: true },
+    include: { shipment: { include: { carrier: true } }, items: true },
   });
 
   if (!order) {
     throw AppError.notFound('Order not found');
   }
 
-  let carrier: { trackingUrlTemplate: string } | null = null;
+  let carrier: { name: string; trackingUrlTemplate: string } | null = null;
 
   if (input.carrierId) {
     carrier = await prisma.shippingCarrier.findUnique({
@@ -94,6 +99,8 @@ export async function upsertOrderShipment(
   );
 
   const timestamps = resolveShipmentTimestamps(status, order.shipment);
+
+  const previousStatus = order.shipment?.status ?? order.shippingStatus;
 
   if (order.shipment) {
     await prisma.shipment.update({
@@ -136,7 +143,33 @@ export async function upsertOrderShipment(
     });
   }
 
-  return loadOrderDto(orderId);}
+  const carrierName = carrier?.name ?? order.shipment?.carrier?.name ?? '';
+
+  if (
+    status === ShippingStatus.SHIPPED &&
+    previousStatus !== ShippingStatus.SHIPPED
+  ) {
+    void sendOrderShippedEmail(
+      order,
+      carrierName,
+      trackingNumber ?? '',
+      trackingUrl ?? '',
+    ).catch((error) => {
+      console.error('[mail] ORDER_SHIPPED failed', error);
+    });
+  }
+
+  if (
+    status === ShippingStatus.DELIVERED &&
+    previousStatus !== ShippingStatus.DELIVERED
+  ) {
+    void sendOrderDeliveredEmail(order).catch((error) => {
+      console.error('[mail] ORDER_DELIVERED failed', error);
+    });
+  }
+
+  return loadOrderDto(orderId);
+}
 
 export async function getShipmentByOrderId(orderId: string) {
   const shipment = await prisma.shipment.findUnique({

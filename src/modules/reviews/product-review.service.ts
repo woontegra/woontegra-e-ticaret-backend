@@ -13,6 +13,7 @@ import type {
   SubmitProductReviewInput,
 } from './reviews.schema.js';
 import { notifyNewReview } from '../notifications/notification.service.js';
+import { sendReviewApprovedEmail } from '../mail/mail-order.service.js';
 
 const reviewInclude = {
   product: { select: { id: true, name: true, slug: true, productKind: true } },
@@ -162,6 +163,14 @@ export async function approveProductReview(id: string) {
       approvedAt: new Date(),
     },
     include: reviewInclude,
+  });
+
+  void sendReviewApprovedEmail({
+    customerEmail: review.email,
+    customerName: review.name,
+    productName: review.product.name,
+  }).catch((error) => {
+    console.error('[mail] REVIEW_APPROVED failed', error);
   });
 
   return toProductReviewDto(review);

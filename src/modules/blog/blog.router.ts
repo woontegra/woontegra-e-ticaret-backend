@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { validateSlugParam } from '../../middlewares/validate-slug.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as blogCategoryController from './blog-category.controller.js';
 import * as blogPostController from './blog-post.controller.js';
@@ -27,4 +28,8 @@ blogPostsAdminRouter.post('/:id/publish', asyncHandler(blogPostController.publis
 blogPostsAdminRouter.post('/:id/unpublish', asyncHandler(blogPostController.unpublishPost));
 
 blogPublicRouter.get('/posts', asyncHandler(blogPostController.listPublicPosts));
-blogPublicRouter.get('/posts/:slug', asyncHandler(blogPostController.getPublicPost));
+blogPublicRouter.get(
+  '/posts/:slug',
+  validateSlugParam(),
+  asyncHandler(blogPostController.getPublicPost),
+);

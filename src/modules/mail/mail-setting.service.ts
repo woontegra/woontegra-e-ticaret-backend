@@ -1,3 +1,5 @@
+import type { MailSetting } from '@prisma/client';
+import { env } from '../../config/index.js';
 import { SETTINGS_SINGLETON_ID } from '../../types/api.js';
 import { toMailSettingDto } from '../../lib/mail.mapper.js';
 import { prisma } from '../../lib/prisma.js';
@@ -11,13 +13,28 @@ async function getOrCreate() {
   });
 }
 
+/** Merge optional SMTP_* env vars (bootstrap) over DB values. */
+function mergeMailEnv(setting: MailSetting): MailSetting {
+  return {
+    ...setting,
+    smtpHost: env.SMTP_HOST || setting.smtpHost,
+    smtpPort: env.SMTP_PORT ?? setting.smtpPort,
+    smtpUser: env.SMTP_USER || setting.smtpUser,
+    smtpPass: env.SMTP_PASS || setting.smtpPass,
+    fromEmail: env.MAIL_FROM_EMAIL || setting.fromEmail,
+    fromName: env.MAIL_FROM_NAME || setting.fromName,
+    replyTo: env.MAIL_REPLY_TO ?? setting.replyTo,
+    isActive: env.MAIL_ACTIVE ?? setting.isActive,
+  };
+}
+
 export async function getMailSettings() {
-  const setting = await getOrCreate();
+  const setting = mergeMailEnv(await getOrCreate());
   return toMailSettingDto(setting, { maskPassword: true });
 }
 
 export async function getMailSettingsRaw() {
-  return getOrCreate();
+  return mergeMailEnv(await getOrCreate());
 }
 
 export async function updateMailSettings(input: UpdateMailSettingInput) {
@@ -39,5 +56,5 @@ export async function updateMailSettings(input: UpdateMailSettingInput) {
     },
   });
 
-  return toMailSettingDto(setting, { maskPassword: true });
+  return toMailSettingDto(mergeMailEnv(setting), { maskPassword: true });
 }

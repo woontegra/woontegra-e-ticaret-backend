@@ -19,9 +19,14 @@ import type {
   CheckoutResultDto,
   ExternalLinkConfig,
 } from '../../types/api.js';
+import {
+  buildFulfillmentMessages,
+  collectDeliveryModes,
+} from '../../lib/cart-product-rules.js';
+import { getPublicOrderDownloadLinks } from './digitalDelivery.service.js';
 import { getCartRecordBySession } from './cart.service.js';
 import type { CheckoutInput } from './checkout.schema.js';
-import { sendOrderCreatedEmail } from '../mail/mail-order.service.js';
+import { sendOrderCreatedEmail, sendBankTransferWaitingEmail, buildBankTransferInfo } from '../mail/mail-order.service.js';
 import { validateCartCouponForCheckout } from '../promotion/cart-coupon.service.js';
 import {
   maybeNotifyPaymentWaiting,
@@ -195,8 +200,21 @@ export async function checkout(
     console.error('[mail] ORDER_CREATED failed', error);
   });
 
+  if (paymentMethod.type === 'BANK_TRANSFER' && bankAccounts?.length) {
+    const bankInfo = buildBankTransferInfo(bankAccounts);
+    void sendBankTransferWaitingEmail(order, bankInfo.html, bankInfo.text).catch(
+      (error) => {
+        console.error('[mail] BANK_TRANSFER_WAITING failed', error);
+      },
+    );
+  }
+
   notifyNewOrder(order);
   maybeNotifyPaymentWaiting(order, order.paymentStatus);
+
+  const deliveryModes = collectDeliveryModes(
+    cartWithItems.items.map((item) => item.product),
+  );
 
   return {
     order: publicOrder,
@@ -209,10 +227,21 @@ export async function checkout(
       redirectUrl,
       message,
     },
+    fulfillment: {
+      deliveryModes,
+      messages: buildFulfillmentMessages(
+        deliveryModes,
+        paymentMethod.type,
+        order.paymentStatus,
+      ),
+    },
   };
 }
 
-export async function getPublicOrderByNumber(orderNumber: string) {
+export async function getPublicOrderByNumber(
+  orderNumber: string,
+  customerEmail: string,
+) {
   const order = await prisma.order.findUnique({
     where: { orderNumber },
     include: {
@@ -226,5 +255,51 @@ export async function getPublicOrderByNumber(orderNumber: string) {
     throw AppError.notFound('Order not found');
   }
 
-  return toPublicOrderDto(order);
+  if (
+    order.customerEmail.trim().toLowerCase() !==
+    customerEmail.trim().toLowerCase()
+  ) {
+    throw AppError.notFound('Order not found');
+  }
+
+  const productIds = order.items
+    .map((item) => item.productId)
+    .filter((id): id is string => Boolean(id));
+
+  const products =
+    productIds.length > 0
+      ? await prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { deliveryMode: true },
+        })
+      : [];
+
+  const deliveryModes = collectDeliveryModes(products);
+  const publicOrder = toPublicOrderDto(order);
+
+  const downloadLinks =
+    order.paymentStatus === PaymentStatus.PAID
+      ? await getPublicOrderDownloadLinks(orderNumber, customerEmail)
+      : [];
+
+  return {
+    ...publicOrder,
+    fulfillment: {
+      deliveryModes,
+      messages: buildFulfillmentMessages(
+        deliveryModes,
+        order.paymentMethod?.type ?? null,
+        order.paymentStatus,
+      ),
+      downloadLinks,
+    },
+  };
+}
+
+export async function getPublicOrderDownloads(
+  orderNumber: string,
+  customerEmail: string,
+) {
+  const links = await getPublicOrderDownloadLinks(orderNumber, customerEmail);
+  return { links };
 }

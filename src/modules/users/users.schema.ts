@@ -18,7 +18,9 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const listUsersQuerySchema = z.object({
+import { paginationQuerySchema } from '../../lib/pagination.js';
+
+export const listUsersQuerySchema = paginationQuerySchema.extend({
   search: z.string().optional(),
   role: userRoleEnum.optional(),
   isActive: z

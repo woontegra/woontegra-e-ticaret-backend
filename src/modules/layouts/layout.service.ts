@@ -267,10 +267,21 @@ export async function getPublicHomeLayout() {
       status: PageStatus.PUBLISHED,
       pageId: null,
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      layoutType: true,
+      publishedAt: true,
       blocks: {
         where: { isActive: true },
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          settings: true,
+          content: true,
+        },
       },
     },
   });

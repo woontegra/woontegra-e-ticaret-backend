@@ -17,7 +17,7 @@ export async function getCompanySettings() {
 }
 
 export async function updateCompanySettings(input: UpdateCompanySettingInput) {
-  const { socialLinks, defaultTaxRate, ...rest } = input;
+  const { socialLinks, defaultTaxRate, contactLabels, ...rest } = input;
 
   const setting = await prisma.companySetting.upsert({
     where: { id: SETTINGS_SINGLETON_ID },
@@ -25,12 +25,14 @@ export async function updateCompanySettings(input: UpdateCompanySettingInput) {
       ...rest,
       ...(defaultTaxRate !== undefined ? { defaultTaxRate } : {}),
       ...(socialLinks !== undefined ? { socialLinks } : {}),
+      ...(contactLabels !== undefined ? { contactLabels } : {}),
     },
     create: {
       id: SETTINGS_SINGLETON_ID,
       ...rest,
       ...(defaultTaxRate !== undefined ? { defaultTaxRate } : {}),
       ...(socialLinks !== undefined ? { socialLinks } : {}),
+      ...(contactLabels !== undefined ? { contactLabels } : {}),
     },
   });
 

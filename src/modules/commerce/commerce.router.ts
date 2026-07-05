@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRoles } from '../../middlewares/auth.middleware.js';
+import { publicWriteRateLimiter } from '../../middlewares/rate-limit.middleware.js';
 import { asyncHandler } from '../../utils/async-handler.js';
 import * as commerceController from './commerce.controller.js';
 
@@ -27,8 +28,16 @@ cartPublicRouter.delete(
   asyncHandler(commerceController.removeCartCoupon),
 );
 
-checkoutPublicRouter.post('/', asyncHandler(commerceController.checkout));
+checkoutPublicRouter.post(
+  '/',
+  publicWriteRateLimiter,
+  asyncHandler(commerceController.checkout),
+);
 
+ordersPublicRouter.get(
+  '/:orderNumber/downloads',
+  asyncHandler(commerceController.getPublicOrderDownloads),
+);
 ordersPublicRouter.get(
   '/:orderNumber',
   asyncHandler(commerceController.getPublicOrder),
@@ -37,7 +46,7 @@ ordersPublicRouter.get(
 const orderAdminRoles = requireRoles(
   'SUPER_ADMIN',
   'ADMIN',
-  'ADMIN',
+  'EDITOR',
   'STAFF',
 );
 
@@ -62,5 +71,9 @@ ordersAdminRouter.patch(
 ordersAdminRouter.patch(
   '/:id/shipment',
   asyncHandler(commerceController.updateOrderShipment),
+);
+ordersAdminRouter.post(
+  '/:id/retry-digital-delivery',
+  asyncHandler(commerceController.retryOrderDigitalDelivery),
 );
 ordersAdminRouter.get('/:id', asyncHandler(commerceController.getOrder));

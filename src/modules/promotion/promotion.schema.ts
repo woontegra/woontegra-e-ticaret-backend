@@ -1,5 +1,6 @@
 import { CouponType, CampaignType } from '@prisma/client';
 import { z } from 'zod';
+import { paginationQuerySchema } from '../../lib/pagination.js';
 
 const idArraySchema = z.array(z.string().min(1)).default([]);
 
@@ -24,6 +25,14 @@ export const createCouponSchema = z.object({
 
 export const updateCouponSchema = createCouponSchema.partial();
 
+export const listCouponsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+});
+
 export const applyCouponSchema = z.object({
   code: z.string().min(1).max(40),
 });
@@ -43,7 +52,17 @@ export const createCampaignSchema = z.object({
 
 export const updateCampaignSchema = createCampaignSchema.partial();
 
+export const listCampaignsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+});
+
 export type CreateCouponInput = z.infer<typeof createCouponSchema>;
 export type UpdateCouponInput = z.infer<typeof updateCouponSchema>;
+export type ListCouponsQuery = z.infer<typeof listCouponsQuerySchema>;
 export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
 export type UpdateCampaignInput = z.infer<typeof updateCampaignSchema>;
+export type ListCampaignsQuery = z.infer<typeof listCampaignsQuerySchema>;

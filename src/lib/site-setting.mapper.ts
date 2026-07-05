@@ -1,6 +1,7 @@
 import type { SiteSetting } from '@prisma/client';
 import type { SiteSettingDto } from '../types/api.js';
 import { resolveMediaUrlMap } from './media-url.js';
+import { parseStorefrontUi } from './storefront-ui.js';
 
 export async function toSiteSettingDto(
   setting: SiteSetting,
@@ -31,6 +32,7 @@ export async function toSiteSettingDto(
     ogImageUrl: setting.ogImageMediaId
       ? (urlMap.get(setting.ogImageMediaId) ?? null)
       : null,
+    storefrontUi: parseStorefrontUi(setting.storefrontUi),
     createdAt: setting.createdAt.toISOString(),
     updatedAt: setting.updatedAt.toISOString(),
   };

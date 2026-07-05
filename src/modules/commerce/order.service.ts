@@ -7,7 +7,13 @@ import {
 import { AppError } from '../../lib/app-error.js';
 import { toOrderDto, toOrderSummaryDto } from '../../lib/order.mapper.js';
 import { prisma } from '../../lib/prisma.js';
+import { sendPaymentReceivedEmail } from '../mail/mail-order.service.js';
 import { maybeNotifyPaymentWaiting } from '../notifications/notification.service.js';
+import {
+  getAdminOrderDigitalDelivery,
+  onOrderPaymentCompleted,
+  retryDigitalDeliveryForOrder,
+} from './digitalDelivery.service.js';
 import type { ListOrdersQuery } from './order.schema.js';
 
 function parseDateStart(value: string): Date {
@@ -78,7 +84,9 @@ async function loadOrderDto(id: string) {
     },
   });
   if (!order) throw AppError.notFound('Order not found');
-  return toOrderDto(order);
+  const dto = toOrderDto(order);
+  const digitalDelivery = await getAdminOrderDigitalDelivery(id);
+  return { ...dto, digitalDelivery };
 }
 
 export async function listOrders(query: ListOrdersQuery) {
@@ -138,11 +146,35 @@ export async function updateOrderPaymentStatus(
   id: string,
   paymentStatus: PaymentStatus,
 ) {
-  const order = await prisma.order.findUnique({ where: { id } });
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true },
+  });
   if (!order) throw AppError.notFound('Order not found');
+
+  const previousStatus = order.paymentStatus;
 
   await prisma.order.update({ where: { id }, data: { paymentStatus } });
   maybeNotifyPaymentWaiting(order, paymentStatus);
+
+  if (
+    paymentStatus === PaymentStatus.PAID &&
+    previousStatus !== PaymentStatus.PAID
+  ) {
+    void sendPaymentReceivedEmail(order).catch((error) => {
+      console.error('[mail] PAYMENT_RECEIVED failed', error);
+    });
+    void onOrderPaymentCompleted(id).catch((error) => {
+      console.error('[digital-delivery] fulfill failed', error);
+    });
+  }
+
+  return loadOrderDto(id);
+}
+
+export async function retryOrderDigitalDelivery(id: string) {
+  await ensureOrder(id);
+  await retryDigitalDeliveryForOrder(id);
   return loadOrderDto(id);
 }
 

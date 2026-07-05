@@ -11,6 +11,7 @@ import { checkoutSchema } from './checkout.schema.js';
 import * as checkoutService from './checkout.service.js';
 import {
   listOrdersQuerySchema,
+  publicOrderQuerySchema,
   updateOrderAdminNoteSchema,
   updateOrderPaymentStatusSchema,
   updateOrderShippingStatusSchema,
@@ -64,8 +65,19 @@ export async function checkout(req: Request, res: Response) {
 }
 
 export async function getPublicOrder(req: Request, res: Response) {
+  const query = publicOrderQuerySchema.parse(req.query);
   const data = await checkoutService.getPublicOrderByNumber(
     req.params.orderNumber,
+    query.email,
+  );
+  sendSuccess(res, data);
+}
+
+export async function getPublicOrderDownloads(req: Request, res: Response) {
+  const query = publicOrderQuerySchema.parse(req.query);
+  const data = await checkoutService.getPublicOrderDownloads(
+    req.params.orderNumber,
+    query.email,
   );
   sendSuccess(res, data);
 }
@@ -129,5 +141,10 @@ export async function updateOrderShipment(req: Request, res: Response) {
     req.params.id,
     input,
   );
+  sendSuccess(res, data);
+}
+
+export async function retryOrderDigitalDelivery(req: Request, res: Response) {
+  const data = await orderService.retryOrderDigitalDelivery(req.params.id);
   sendSuccess(res, data);
 }

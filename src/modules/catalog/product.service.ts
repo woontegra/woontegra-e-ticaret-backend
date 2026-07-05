@@ -1,5 +1,4 @@
-import type { Prisma } from '@prisma/client';
-import { ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
 import { AppError } from '../../lib/app-error.js';
 import { toInputJson } from '../../lib/json.js';
 import {
@@ -21,6 +20,7 @@ import {
   notifyLowStock,
   shouldNotifyLowStock,
 } from '../notifications/notification.service.js';
+import { resolvePagination } from '../../lib/pagination.js';
 import type {
   CreateProductInput,
   ListProductsQuery,
@@ -31,6 +31,43 @@ import type {
 const productInclude = {
   category: true,
   brand: true,
+} as const;
+
+const publicProductListSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  shortDescription: true,
+  productKind: true,
+  deliveryMode: true,
+  purchaseEnabled: true,
+  basePrice: true,
+  salePrice: true,
+  compareAtPrice: true,
+  currency: true,
+  taxRate: true,
+  version: true,
+  featureBullets: true,
+  licenseRequired: true,
+  saasRequiresLogin: true,
+  seoTitle: true,
+  seoDescription: true,
+  mainImageId: true,
+  isFeatured: true,
+  isNew: true,
+  isBestSeller: true,
+  demoUrl: true,
+  purchaseUrl: true,
+  category: { select: { id: true, name: true, slug: true } },
+  brand: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoId: true,
+      description: true,
+    },
+  },
 } as const;
 
 async function resolveUniqueProductSlug(
@@ -138,6 +175,12 @@ function buildProductWhere(
     ...('productKind' in query && query.productKind
       ? { productKind: query.productKind }
       : {}),
+    ...('deliveryMode' in query && query.deliveryMode
+      ? { deliveryMode: query.deliveryMode }
+      : {}),
+    ...('licenseRequired' in query && query.licenseRequired !== undefined
+      ? { licenseRequired: query.licenseRequired }
+      : {}),
     ...('featured' in query && query.featured ? { isFeatured: true } : {}),
     ...(query.search
       ? {
@@ -159,6 +202,48 @@ function mapProductData(input: CreateProductInput | UpdateProductInput) {
     ...(input.sku !== undefined ? { sku: input.sku } : {}),
     ...(input.barcode !== undefined ? { barcode: input.barcode } : {}),
     ...(input.productKind !== undefined ? { productKind: input.productKind } : {}),
+    ...(input.deliveryMode !== undefined ? { deliveryMode: input.deliveryMode } : {}),
+    ...(input.purchaseEnabled !== undefined
+      ? { purchaseEnabled: input.purchaseEnabled }
+      : {}),
+    ...(input.currency !== undefined ? { currency: input.currency } : {}),
+    ...(input.compareAtPrice !== undefined
+      ? { compareAtPrice: input.compareAtPrice }
+      : {}),
+    ...(input.version !== undefined ? { version: input.version } : {}),
+    ...(input.featureBullets !== undefined
+      ? { featureBullets: toInputJson(input.featureBullets) }
+      : {}),
+    ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
+    ...(input.licenseRequired !== undefined
+      ? { licenseRequired: input.licenseRequired }
+      : {}),
+    ...(input.licenseAppCode !== undefined
+      ? { licenseAppCode: input.licenseAppCode }
+      : {}),
+    ...(input.licenseDays !== undefined ? { licenseDays: input.licenseDays } : {}),
+    ...(input.licenseMonths !== undefined
+      ? { licenseMonths: input.licenseMonths }
+      : {}),
+    ...(input.licenseMaxDevices !== undefined
+      ? { licenseMaxDevices: input.licenseMaxDevices }
+      : {}),
+    ...(input.saasAppCode !== undefined ? { saasAppCode: input.saasAppCode } : {}),
+    ...(input.saasPlanCode !== undefined ? { saasPlanCode: input.saasPlanCode } : {}),
+    ...(input.saasTrialDays !== undefined
+      ? { saasTrialDays: input.saasTrialDays }
+      : {}),
+    ...(input.saasRequiresLogin !== undefined
+      ? { saasRequiresLogin: input.saasRequiresLogin }
+      : {}),
+    ...(input.downloadFiles !== undefined
+      ? {
+          downloadFiles:
+            input.downloadFiles === null
+              ? Prisma.JsonNull
+              : toInputJson(input.downloadFiles),
+        }
+      : {}),
     ...(input.shortDescription !== undefined
       ? { shortDescription: input.shortDescription }
       : {}),
@@ -211,9 +296,7 @@ function mapProductData(input: CreateProductInput | UpdateProductInput) {
 
 export async function listProducts(query: ListProductsQuery) {
   const where = buildProductWhere(query);
-  const page = query.page ?? 1;
-  const limit = query.limit ?? 20;
-  const skip = (page - 1) * limit;
+  const { skip, limit } = resolvePagination(query);
 
   const [items, total] = await Promise.all([
     prisma.product.findMany({
@@ -319,15 +402,16 @@ export async function deleteProduct(id: string) {
 
 export async function listPublicProducts(query: PublicProductsQuery) {
   const where = buildProductWhere(query, true);
-  const page = query.page ?? 1;
-  const limit = query.limit ?? 12;
-  const skip = (page - 1) * limit;
+  const { skip, limit } = resolvePagination(query, {
+    defaultLimit: 12,
+    maxLimit: 50,
+  });
   const orderBy = buildPublicOrderBy(query.sort);
 
   const [items, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: productInclude,
+      select: publicProductListSelect,
       orderBy,
       skip,
       take: limit,
@@ -335,7 +419,10 @@ export async function listPublicProducts(query: PublicProductsQuery) {
     prisma.product.count({ where }),
   ]);
 
-  return { items: await toPublicProductDtos(items), total };
+  return {
+    items: await toPublicProductDtos(items as Parameters<typeof toPublicProductDtos>[0]),
+    total,
+  };
 }
 
 export async function getPublicProductBySlug(slug: string) {

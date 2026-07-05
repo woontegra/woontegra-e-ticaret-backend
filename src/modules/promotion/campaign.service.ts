@@ -5,11 +5,38 @@ import {
 } from '../../lib/promotion.mapper.js';
 import { prisma } from '../../lib/prisma.js';
 import { isCampaignActive } from './coupon-engine.service.js';
-import type { CreateCampaignInput, UpdateCampaignInput } from './promotion.schema.js';
+import type { CreateCampaignInput, ListCampaignsQuery, UpdateCampaignInput } from './promotion.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
-export async function listCampaigns() {
-  const items = await prisma.campaign.findMany({ orderBy: { createdAt: 'desc' } });
-  return Promise.all(items.map(toCampaignDto));
+export async function listCampaigns(query: ListCampaignsQuery = {}) {
+  const where = {
+    ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+    ...(query.search
+      ? {
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' as const } },
+            { title: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const { skip, limit } = resolvePagination(query);
+
+  const [items, total] = await Promise.all([
+    prisma.campaign.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.campaign.count({ where }),
+  ]);
+
+  return {
+    items: await Promise.all(items.map(toCampaignDto)),
+    total,
+  };
 }
 
 export async function getCampaignById(id: string) {

@@ -3,10 +3,11 @@ import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { sendCreated, sendNoContent, sendSuccess } from '../../lib/response.js';
 import {
   createProductCategorySchema,
+  listProductCategoriesQuerySchema,
   updateProductCategorySchema,
 } from './product-category.schema.js';
 import * as productCategoryService from './product-category.service.js';
-import { createBrandSchema, updateBrandSchema } from './brand.schema.js';
+import { createBrandSchema, listBrandsQuerySchema, updateBrandSchema } from './brand.schema.js';
 import * as brandService from './brand.service.js';
 import {
   createProductSchema,
@@ -31,8 +32,9 @@ import {
 } from './product-variant.schema.js';
 import * as productVariantService from './product-variant.service.js';
 
-export async function listCategories(_req: Request, res: Response) {
-  const data = await productCategoryService.listProductCategories();
+export async function listCategories(req: Request, res: Response) {
+  const query = listProductCategoriesQuerySchema.parse(req.query);
+  const data = await productCategoryService.listProductCategories(query);
   sendSuccess(res, data);
 }
 
@@ -63,8 +65,9 @@ export async function deleteCategory(req: Request, res: Response) {
   sendNoContent(res);
 }
 
-export async function listBrands(_req: Request, res: Response) {
-  const data = await brandService.listBrands();
+export async function listBrands(req: Request, res: Response) {
+  const query = listBrandsQuerySchema.parse(req.query);
+  const data = await brandService.listBrands(query);
   sendSuccess(res, data);
 }
 

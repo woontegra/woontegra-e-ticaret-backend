@@ -1,11 +1,34 @@
 import { AppError } from '../../lib/app-error.js';
 import { toCouponDto } from '../../lib/promotion.mapper.js';
 import { prisma } from '../../lib/prisma.js';
-import type { CreateCouponInput, UpdateCouponInput } from './promotion.schema.js';
+import type { CreateCouponInput, ListCouponsQuery, UpdateCouponInput } from './promotion.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
-export async function listCoupons() {
-  const items = await prisma.coupon.findMany({ orderBy: { createdAt: 'desc' } });
-  return items.map(toCouponDto);
+export async function listCoupons(query: ListCouponsQuery = {}) {
+  const where = {
+    ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+    ...(query.search
+      ? {
+          OR: [
+            { code: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const { skip, limit } = resolvePagination(query);
+
+  const [items, total] = await Promise.all([
+    prisma.coupon.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.coupon.count({ where }),
+  ]);
+
+  return { items: items.map(toCouponDto), total };
 }
 
 export async function getCouponById(id: string) {

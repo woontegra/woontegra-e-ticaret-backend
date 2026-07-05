@@ -1,5 +1,6 @@
 import type { CompanySetting } from '@prisma/client';
 import type { CompanySettingDto, SocialLinks } from '../types/api.js';
+import { parseContactLabels } from './storefront-ui.js';
 
 function parseSocialLinks(value: unknown): SocialLinks {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -24,6 +25,8 @@ export function toCompanySettingDto(setting: CompanySetting): CompanySettingDto 
     email: setting.email,
     supportEmail: setting.supportEmail,
     workingHours: setting.workingHours,
+    contactFormKey: setting.contactFormKey,
+    contactLabels: parseContactLabels(setting.contactLabels),
     currency: setting.currency,
     defaultTaxRate: Number(setting.defaultTaxRate),
     socialLinks: parseSocialLinks(setting.socialLinks),

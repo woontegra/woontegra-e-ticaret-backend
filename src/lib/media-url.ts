@@ -1,15 +1,18 @@
 import { env } from '../config/index.js';
+import { resolveStoragePublicBaseUrl } from './public-url.js';
 import { prisma } from './prisma.js';
 
 export function buildPublicMediaUrl(storageKey: string): string {
-  const base = env.STORAGE_PUBLIC_BASE_URL;
+  const base = resolveStoragePublicBaseUrl();
 
   if (!base) {
-    throw new Error('STORAGE_PUBLIC_BASE_URL is not configured');
+    throw new Error(
+      'Media URL not configured. Set STORAGE_PUBLIC_BASE_URL or API_PUBLIC_URL.',
+    );
   }
 
   const normalizedKey = storageKey.replace(/^\/+/, '');
-  return `${base.replace(/\/$/, '')}/${normalizedKey}`;
+  return `${base}/${normalizedKey}`;
 }
 
 export async function resolveMediaUrl(
@@ -19,10 +22,15 @@ export async function resolveMediaUrl(
 
   const asset = await prisma.mediaAsset.findUnique({
     where: { id: mediaId },
-    select: { url: true },
+    select: { url: true, publicUrl: true, usageType: true, storageProvider: true },
   });
 
-  return asset?.url ?? null;
+  if (!asset) return null;
+  if (asset.usageType === 'DOWNLOAD_BINARY' && asset.storageProvider === 'R2') {
+    return null;
+  }
+
+  return asset.publicUrl ?? asset.url ?? null;
 }
 
 export async function resolveMediaUrlMap(
@@ -35,11 +43,23 @@ export async function resolveMediaUrlMap(
 
   const assets = await prisma.mediaAsset.findMany({
     where: { id: { in: ids } },
-    select: { id: true, url: true },
+    select: {
+      id: true,
+      url: true,
+      publicUrl: true,
+      usageType: true,
+      storageProvider: true,
+    },
   });
 
   for (const asset of assets) {
-    map.set(asset.id, asset.url);
+    if (asset.usageType === 'DOWNLOAD_BINARY' && asset.storageProvider === 'R2') {
+      continue;
+    }
+    const resolved = asset.publicUrl ?? asset.url;
+    if (resolved) {
+      map.set(asset.id, resolved);
+    }
   }
 
   return map;
@@ -47,4 +67,14 @@ export async function resolveMediaUrlMap(
 
 export function isImageMimeType(mimeType: string): boolean {
   return mimeType.startsWith('image/');
+}
+
+/** Warn once at startup when media URLs cannot be resolved. */
+export function assertMediaUrlConfig(): void {
+  if (env.STORAGE_DRIVER !== 'local') return;
+  if (!resolveStoragePublicBaseUrl()) {
+    console.warn(
+      '[config] STORAGE_PUBLIC_BASE_URL or API_PUBLIC_URL not set — uploaded media URLs will fail until configured.',
+    );
+  }
 }

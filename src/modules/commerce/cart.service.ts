@@ -1,5 +1,6 @@
 import { ProductStatus } from '@prisma/client';
 import { AppError } from '../../lib/app-error.js';
+import { assertProductCanBeAddedToCart } from '../../lib/cart-product-rules.js';
 import {
   resolveProductTaxRate,
   resolveProductUnitPrice,
@@ -59,6 +60,8 @@ async function validateCartProduct(
   if (!product) {
     throw AppError.badRequest('Product is not available');
   }
+
+  assertProductCanBeAddedToCart(product);
 
   let variant = null;
   if (variantId) {

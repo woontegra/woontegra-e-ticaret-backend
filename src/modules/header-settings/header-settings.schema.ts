@@ -21,6 +21,10 @@ export const updateHeaderSettingSchema = z.object({
   announcementEnabled: z.boolean().optional(),
   announcementText: z.string().max(500).nullable().optional(),
   announcementLink: z.string().max(2000).nullable().optional(),
+  accountUrl: z.string().max(2000).nullable().optional(),
+  searchPlaceholder: z.string().max(120).nullable().optional(),
+  cartUrl: z.string().max(500).nullable().optional(),
+  favoritesUrl: z.string().max(500).nullable().optional(),
 });
 
 export type UpdateHeaderSettingInput = z.infer<typeof updateHeaderSettingSchema>;

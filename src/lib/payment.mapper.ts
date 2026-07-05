@@ -1,8 +1,4 @@
-import type {
-  PaymentMethod,
-  PaymentMethodType,
-  Prisma,
-} from '@prisma/client';
+import type { PaymentMethod, PaymentMethodType, Prisma } from '@prisma/client';
 import type {
   BankTransferPublicConfig,
   PaymentMethodDto,
@@ -46,14 +42,109 @@ export const DEFAULT_PAYMENT_METHODS: Array<{
   },
 ];
 
-export function toPaymentMethodDto(method: PaymentMethod): PaymentMethodDto {
+function maskPaytrConfig(config: Record<string, unknown>) {
+  return {
+    merchantId: typeof config.merchantId === 'string' ? config.merchantId : '',
+    merchantKey: '',
+    merchantSalt: '',
+    hasMerchantKey: Boolean(config.merchantKey),
+    hasMerchantSalt: Boolean(config.merchantSalt),
+  };
+}
+
+function maskIyzicoConfig(config: Record<string, unknown>) {
+  return {
+    apiKey: '',
+    secretKey: '',
+    hasApiKey: Boolean(config.apiKey),
+    hasSecretKey: Boolean(config.secretKey),
+    baseUrl:
+      typeof config.baseUrl === 'string'
+        ? config.baseUrl
+        : 'https://sandbox-api.iyzipay.com',
+  };
+}
+
+export function maskPaymentMethodConfig(
+  type: PaymentMethodType,
+  config: unknown,
+  options?: { maskSecrets?: boolean },
+) {
+  const maskSecrets = options?.maskSecrets ?? true;
+  const record = (config ?? {}) as Record<string, unknown>;
+
+  if (!maskSecrets) return config as PaymentMethodDto['config'];
+
+  switch (type) {
+    case 'PAYTR':
+      return maskPaytrConfig(record);
+    case 'IYZICO':
+      return maskIyzicoConfig(record);
+    default:
+      return config as PaymentMethodDto['config'];
+  }
+}
+
+export function mergePaymentMethodConfig(
+  type: PaymentMethodType,
+  existing: unknown,
+  incoming: unknown,
+) {
+  const current = (existing ?? {}) as Record<string, unknown>;
+  const next = (incoming ?? {}) as Record<string, unknown>;
+
+  switch (type) {
+    case 'PAYTR': {
+      const merged = {
+        merchantId:
+          typeof next.merchantId === 'string'
+            ? next.merchantId
+            : String(current.merchantId ?? ''),
+        merchantKey:
+          typeof next.merchantKey === 'string' && next.merchantKey.trim()
+            ? next.merchantKey
+            : String(current.merchantKey ?? ''),
+        merchantSalt:
+          typeof next.merchantSalt === 'string' && next.merchantSalt.trim()
+            ? next.merchantSalt
+            : String(current.merchantSalt ?? ''),
+      };
+      return merged;
+    }
+    case 'IYZICO': {
+      return {
+        apiKey:
+          typeof next.apiKey === 'string' && next.apiKey.trim()
+            ? next.apiKey
+            : String(current.apiKey ?? ''),
+        secretKey:
+          typeof next.secretKey === 'string' && next.secretKey.trim()
+            ? next.secretKey
+            : String(current.secretKey ?? ''),
+        baseUrl:
+          typeof next.baseUrl === 'string' && next.baseUrl.trim()
+            ? next.baseUrl
+            : String(
+                current.baseUrl ?? 'https://sandbox-api.iyzipay.com',
+              ),
+      };
+    }
+    default:
+      return next;
+  }
+}
+
+export function toPaymentMethodDto(
+  method: PaymentMethod,
+  options?: { maskSecrets?: boolean },
+): PaymentMethodDto {
   return {
     id: method.id,
     type: method.type as ApiPaymentMethodType,
     name: method.name,
     isActive: method.isActive,
     isTestMode: method.isTestMode,
-    config: method.config as PaymentMethodDto['config'],
+    config: maskPaymentMethodConfig(method.type, method.config, options) as PaymentMethodDto['config'],
     createdAt: method.createdAt.toISOString(),
     updatedAt: method.updatedAt.toISOString(),
   };

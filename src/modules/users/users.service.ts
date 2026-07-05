@@ -12,6 +12,7 @@ import type {
   CreateUserInput,
   UpdateUserInput,
 } from './users.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
 type Actor = Pick<User, 'id' | 'role'>;
 
@@ -23,7 +24,13 @@ function assertRoleAssignment(actor: Actor, role: UserRole) {
 
 export async function listUsers(
   actor: Actor,
-  query: { search?: string; role?: UserRole; isActive?: boolean },
+  query: {
+    search?: string;
+    role?: UserRole;
+    isActive?: boolean;
+    page?: number;
+    limit?: number;
+  },
 ) {
   const where = {
     ...(query.role ? { role: query.role } : {}),
@@ -38,12 +45,19 @@ export async function listUsers(
       : {}),
   };
 
-  const users = await prisma.user.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-  });
+  const { skip, limit } = resolvePagination(query);
 
-  return toSafeUsers(users);
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { items: toSafeUsers(users), total };
 }
 
 export async function getUserById(actor: Actor, userId: string) {

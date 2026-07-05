@@ -1,6 +1,8 @@
-import { ProductKind, ProductStatus } from '@prisma/client';
+import { DeliveryMode, ProductKind, ProductStatus } from '@prisma/client';
 import { z } from 'zod';
 import { isValidSlug, slugify } from '../../lib/slug.js';
+import { optionalSanitizedHtml } from '../../lib/html-sanitize.js';
+import { productDownloadFilesSchema } from '../../lib/product-download-files.js';
 
 const slugSchema = z
   .string()
@@ -17,8 +19,28 @@ const productFieldsSchema = z.object({
   sku: z.string().max(80).nullable().optional(),
   barcode: z.string().max(80).nullable().optional(),
   productKind: z.nativeEnum(ProductKind).optional(),
+  deliveryMode: z.nativeEnum(DeliveryMode).optional(),
+  purchaseEnabled: z.boolean().optional(),
+  currency: z.string().max(8).optional(),
+  compareAtPrice: z.number().nonnegative().nullable().optional(),
+  version: z.string().max(50).nullable().optional(),
+  featureBullets: z.array(z.string().max(200)).optional(),
+  sortOrder: z.number().int().optional(),
+  licenseRequired: z.boolean().optional(),
+  licenseAppCode: z.string().max(80).nullable().optional(),
+  licenseDays: z.number().int().positive().nullable().optional(),
+  licenseMonths: z.number().int().positive().nullable().optional(),
+  licenseMaxDevices: z.number().int().positive().nullable().optional(),
+  saasAppCode: z.string().max(80).nullable().optional(),
+  saasPlanCode: z.string().max(80).nullable().optional(),
+  saasTrialDays: z.number().int().nonnegative().nullable().optional(),
+  saasRequiresLogin: z.boolean().optional(),
+  downloadFiles: productDownloadFilesSchema,
   shortDescription: z.string().max(500).nullable().optional(),
-  descriptionHtml: z.string().optional(),
+  descriptionHtml: z
+    .string()
+    .optional()
+    .transform((value) => optionalSanitizedHtml(value)),
   categoryId: z.string().nullable().optional(),
   brandId: z.string().nullable().optional(),
   status: z.nativeEnum(ProductStatus).optional(),
@@ -50,6 +72,8 @@ export const listProductsQuerySchema = z.object({
   categoryId: z.string().optional(),
   brandId: z.string().optional(),
   productKind: z.nativeEnum(ProductKind).optional(),
+  deliveryMode: z.nativeEnum(DeliveryMode).optional(),
+  licenseRequired: z.coerce.boolean().optional(),
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
 });

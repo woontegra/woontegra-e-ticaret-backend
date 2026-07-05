@@ -14,6 +14,7 @@ import type {
   PublicBlogPostsQuery,
   UpdateBlogPostInput,
 } from './blog-post.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
 const postInclude = { category: true } as const;
 
@@ -71,12 +72,15 @@ function buildPostWhere(
 
 export async function listBlogPosts(query: ListBlogPostsQuery) {
   const where = buildPostWhere(query);
+  const { skip, limit } = resolvePagination(query);
 
   const [items, total] = await Promise.all([
     prisma.blogPost.findMany({
       where,
       include: postInclude,
       orderBy: [{ updatedAt: 'desc' }],
+      skip,
+      take: limit,
     }),
     prisma.blogPost.count({ where }),
   ]);
@@ -86,9 +90,10 @@ export async function listBlogPosts(query: ListBlogPostsQuery) {
 
 export async function listPublicBlogPosts(query: PublicBlogPostsQuery) {
   const where = buildPostWhere(query, true);
-  const page = query.page ?? 1;
-  const limit = query.limit ?? 12;
-  const skip = (page - 1) * limit;
+  const { skip, limit, page } = resolvePagination(query, {
+    defaultLimit: 12,
+    maxLimit: 50,
+  });
 
   const [items, total] = await Promise.all([
     prisma.blogPost.findMany({

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidSlug, slugify } from '../../lib/slug.js';
+import { paginationQuerySchema } from '../../lib/pagination.js';
 
 const slugSchema = z
   .string()
@@ -22,5 +23,14 @@ export const createBrandSchema = z.object({
 
 export const updateBrandSchema = createBrandSchema.partial();
 
+export const listBrandsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().optional(),
+  isActive: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+});
+
 export type CreateBrandInput = z.infer<typeof createBrandSchema>;
 export type UpdateBrandInput = z.infer<typeof updateBrandSchema>;
+export type ListBrandsQuery = z.infer<typeof listBrandsQuerySchema>;

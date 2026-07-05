@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { optionalSanitizedHtml } from '../../lib/html-sanitize.js';
 
 const templateVariableSchema = z.object({
   name: z.string().min(1).max(80),
@@ -19,7 +20,11 @@ export const updateMailSettingSchema = z.object({
 export const updateMailTemplateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   subject: z.string().min(1).max(300).optional(),
-  htmlContent: z.string().min(1).optional(),
+  htmlContent: z
+    .string()
+    .min(1)
+    .optional()
+    .transform((value) => optionalSanitizedHtml(value) ?? value),
   textContent: z.string().max(20000).nullable().optional(),
   variables: z.array(templateVariableSchema).optional(),
   isActive: z.boolean().optional(),

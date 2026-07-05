@@ -7,8 +7,10 @@ import { prisma } from '../../lib/prisma.js';
 import { slugify } from '../../lib/slug.js';
 import type {
   CreateProductCategoryInput,
+  ListProductCategoriesQuery,
   UpdateProductCategoryInput,
 } from './product-category.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
 async function resolveUniqueCategorySlug(
   name: string,
@@ -33,12 +35,35 @@ async function resolveUniqueCategorySlug(
   }
 }
 
-export async function listProductCategories() {
-  const categories = await prisma.productCategory.findMany({
-    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-  });
+export async function listProductCategories(query: ListProductCategoriesQuery = {}) {
+  const where = {
+    ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+    ...(query.search
+      ? {
+          OR: [
+            { name: { contains: query.search, mode: 'insensitive' as const } },
+            { slug: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  };
 
-  return Promise.all(categories.map(toProductCategoryDtoWithUrls));
+  const { skip, limit } = resolvePagination(query);
+
+  const [categories, total] = await Promise.all([
+    prisma.productCategory.findMany({
+      where,
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      skip,
+      take: limit,
+    }),
+    prisma.productCategory.count({ where }),
+  ]);
+
+  return {
+    items: await Promise.all(categories.map(toProductCategoryDtoWithUrls)),
+    total,
+  };
 }
 
 export async function getProductCategoryById(id: string) {

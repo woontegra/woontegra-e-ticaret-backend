@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { requireAuth } from '../middlewares/auth.middleware.js';
+import { publicMaintenanceGuard } from '../middlewares/maintenance.middleware.js';
 import { authRouter } from '../modules/auth/index.js';
 import {
   companySettingsAdminRouter,
@@ -71,6 +73,7 @@ import {
   formDefinitionsAdminRouter,
   formSubmissionsAdminRouter,
 } from '../modules/contact/index.js';
+import { newsletterPublicRouter } from '../modules/newsletter/index.js';
 import {
   reviewsAdminRouter,
   reviewsPublicRouter,
@@ -94,14 +97,19 @@ import {
   reportsAdminRouter,
 } from '../modules/reports/index.js';
 import { usersRouter } from '../modules/users/index.js';
+import { downloadsRouter } from '../modules/downloads/index.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
-apiRouter.use('/users', usersRouter);
+apiRouter.use('/users', requireAuth, usersRouter);
 
-apiRouter.use('/admin/site-settings', siteSettingsAdminRouter);
+apiRouter.use('/admin', requireAuth);
+
+apiRouter.use('/public/site-settings', siteSettingsPublicRouter);
+apiRouter.use('/public/company-settings', companySettingsPublicRouter);
+apiRouter.use('/public', publicMaintenanceGuard);
 apiRouter.use('/admin/company-settings', companySettingsAdminRouter);
 apiRouter.use('/admin/media', mediaRouter);
 apiRouter.use('/admin/pages', pagesAdminRouter);
@@ -137,8 +145,7 @@ apiRouter.use('/admin/notifications', notificationsAdminRouter);
 apiRouter.use('/admin/dashboard', dashboardAdminRouter);
 apiRouter.use('/admin/reports', reportsAdminRouter);
 apiRouter.use('/admin/audit-logs', auditAdminRouter);
-apiRouter.use('/public/site-settings', siteSettingsPublicRouter);
-apiRouter.use('/public/company-settings', companySettingsPublicRouter);
+apiRouter.use('/admin/site-settings', siteSettingsAdminRouter);
 apiRouter.use('/public/pages', pagesPublicRouter);
 apiRouter.use('/public/blog', blogPublicRouter);
 apiRouter.use('/public/menus', menusPublicRouter);
@@ -150,8 +157,10 @@ apiRouter.use('/public/cart', cartPublicRouter);
 apiRouter.use('/public/checkout', checkoutPublicRouter);
 apiRouter.use('/public/payment-methods', paymentMethodsPublicRouter);
 apiRouter.use('/public/contact', contactPublicRouter);
+apiRouter.use('/public/newsletter', newsletterPublicRouter);
 apiRouter.use('/public', reviewsPublicRouter);
 apiRouter.use('/public', seoPublicRouter);
 apiRouter.use('/public', promotionPublicRouter);
 apiRouter.use('/public/orders', ordersPublicRouter);
 apiRouter.use('/public', catalogPublicRouter);
+apiRouter.use('/downloads', downloadsRouter);

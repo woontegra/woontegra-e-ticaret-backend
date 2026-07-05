@@ -19,6 +19,10 @@ export function toHeaderSettingDto(setting: HeaderSetting): HeaderSettingDto {
     announcementEnabled: setting.announcementEnabled,
     announcementText: setting.announcementText,
     announcementLink: setting.announcementLink,
+    accountUrl: setting.accountUrl,
+    searchPlaceholder: setting.searchPlaceholder,
+    cartUrl: setting.cartUrl,
+    favoritesUrl: setting.favoritesUrl,
     createdAt: setting.createdAt.toISOString(),
     updatedAt: setting.updatedAt.toISOString(),
   };

@@ -1,6 +1,7 @@
 import { PageStatus } from '@prisma/client';
 import { z } from 'zod';
 import { isValidSlug, slugify } from '../../lib/slug.js';
+import { optionalSanitizedHtml } from '../../lib/html-sanitize.js';
 
 const slugSchema = z
   .string()
@@ -11,7 +12,9 @@ const slugSchema = z
 
 const optionalMediaId = z.string().min(1).nullable().optional();
 
-export const listBlogPostsQuerySchema = z.object({
+import { paginationQuerySchema } from '../../lib/pagination.js';
+
+export const listBlogPostsQuerySchema = paginationQuerySchema.extend({
   search: z.string().optional(),
   status: z.nativeEnum(PageStatus).optional(),
   categoryId: z.string().optional(),
@@ -28,7 +31,10 @@ export const createBlogPostSchema = z.object({
   title: z.string().min(1).max(200),
   slug: slugSchema.optional(),
   excerpt: z.string().max(500).nullable().optional(),
-  contentHtml: z.string().optional(),
+  contentHtml: z
+    .string()
+    .optional()
+    .transform((value) => optionalSanitizedHtml(value)),
   coverImageId: optionalMediaId,
   categoryId: z.string().nullable().optional(),
   status: z.nativeEnum(PageStatus).optional(),

@@ -9,6 +9,7 @@ import type {
   ListPagesQuery,
   UpdatePageInput,
 } from './pages.schema.js';
+import { resolvePagination } from '../../lib/pagination.js';
 
 function buildWhere(query: ListPagesQuery): Prisma.PageWhereInput {
   return {
@@ -28,11 +29,14 @@ function buildWhere(query: ListPagesQuery): Prisma.PageWhereInput {
 
 export async function listPages(query: ListPagesQuery) {
   const where = buildWhere(query);
+  const { skip, limit } = resolvePagination(query);
 
   const [items, total] = await Promise.all([
     prisma.page.findMany({
       where,
       orderBy: [{ updatedAt: 'desc' }],
+      skip,
+      take: limit,
     }),
     prisma.page.count({ where }),
   ]);

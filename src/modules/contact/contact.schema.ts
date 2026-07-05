@@ -49,6 +49,8 @@ export const createFormDefinitionSchema = z.object({
     .max(80)
     .regex(/^[a-z0-9-]+$/),
   fields: z.array(formFieldSchema).default([]),
+  successMessage: z.string().max(500).nullable().optional(),
+  submitButtonLabel: z.string().max(80).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 

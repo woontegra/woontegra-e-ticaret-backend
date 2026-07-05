@@ -33,4 +33,10 @@ export const updateOrderAdminNoteSchema = z.object({
   note: z.string().max(2000).nullable(),
 });
 
+export const publicOrderQuerySchema = z.object({
+  email: z.string().email(),
+});
+
+export type PublicOrderQuery = z.infer<typeof publicOrderQuerySchema>;
+
 export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;
