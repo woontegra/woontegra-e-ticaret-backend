@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { createApp } from './app.js';
 import { env } from './config/index.js';
-import { seedDatabase } from './db/seed-data.js';
+import { seedDatabase, seedDefaultFooter, seedDefaultHeader, seedDefaultMenus, seedDefaultTheme, seedLegalPages } from './db/seed-data.js';
 import { prisma } from './lib/prisma.js';
 
 const app = createApp();
@@ -41,6 +41,32 @@ async function start() {
         console.log('[api] User table empty — seeding demo users...');
         await seedDatabase(prisma);
         console.log('[api] Demo users created');
+      } else {
+        const pageCount = await prisma.page.count();
+        if (pageCount === 0) {
+          console.log('[api] No pages — seeding legal pages...');
+          await seedLegalPages(prisma);
+        }
+        const menuCount = await prisma.menu.count();
+        if (menuCount === 0) {
+          console.log('[api] No menus — seeding default menus...');
+          await seedDefaultMenus(prisma);
+        }
+        const footerCount = await prisma.footerSetting.count();
+        if (footerCount === 0) {
+          console.log('[api] No footer settings — seeding default footer...');
+          await seedDefaultFooter(prisma);
+        }
+        const themeCount = await prisma.themeSetting.count();
+        if (themeCount === 0) {
+          console.log('[api] No theme settings — seeding default theme...');
+          await seedDefaultTheme(prisma);
+        }
+        const headerCount = await prisma.headerSetting.count();
+        if (headerCount === 0) {
+          console.log('[api] No header settings — seeding default header...');
+          await seedDefaultHeader(prisma);
+        }
       }
     }
   } catch (error) {

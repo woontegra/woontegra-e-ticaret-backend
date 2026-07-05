@@ -17,6 +17,239 @@ enum UserRole {
   STAFF
 }
 
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PageType {
+  STANDARD
+  LEGAL
+  LANDING
+}
+
+enum MenuLocation {
+  HEADER
+  FOOTER
+  MOBILE
+}
+
+enum MenuItemType {
+  PAGE
+  CATEGORY
+  PRODUCT
+  BLOG
+  CUSTOM_URL
+}
+
+enum HeaderLogoPosition {
+  LEFT
+  CENTER
+}
+
+enum HeaderMenuPosition {
+  LEFT
+  CENTER
+  RIGHT
+}
+
+model Menu {
+  id        String       @id @default(cuid())
+  name      String
+  location  MenuLocation @unique
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id           String       @id @default(cuid())
+  menuId       String
+  parentId     String?
+  label        String
+  type         MenuItemType
+  targetId     String?
+  url          String?
+  openInNewTab Boolean      @default(false)
+  sortOrder    Int          @default(0)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuItemTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children MenuItem[] @relation("MenuItemTree")
+
+  @@index([menuId])
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model FooterSetting {
+  id              String   @id @default("default")
+  logoMediaId     String?
+  description     String?
+  phone           String?
+  email           String?
+  address         String?
+  showNewsletter  Boolean  @default(false)
+  copyrightText   String?
+  socialLinks     Json     @default("{}")
+  paymentIconIds  Json     @default("[]")
+  shippingIconIds Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FooterColumn {
+  id        String   @id @default(cuid())
+  title     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  links FooterLink[]
+
+  @@index([sortOrder])
+}
+
+model FooterLink {
+  id           String       @id @default(cuid())
+  columnId     String
+  label        String
+  type         MenuItemType
+  targetId     String?
+  url          String?
+  sortOrder    Int          @default(0)
+  isActive     Boolean      @default(true)
+  openInNewTab Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  column FooterColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId])
+  @@index([sortOrder])
+}
+
+model ThemeSetting {
+  id                String   @id @default("default")
+  activeThemeKey    String   @default("default")
+  colorPalette      Json     @default("{}")
+  typography        Json     @default("{}")
+  layout            Json     @default("{}")
+  buttonStyle       Json     @default("{}")
+  cardStyle         Json     @default("{}")
+  headerStyle       Json     @default("{}")
+  productCardStyle  Json     @default("{}")
+  borderRadius      String   @default("md")
+  shadowLevel       String   @default("sm")
+  containerWidth    String   @default("1280px")
+  customCss         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model HeaderSetting {
+  id                  String              @id @default("default")
+  logoPosition        HeaderLogoPosition  @default(LEFT)
+  menuPosition        HeaderMenuPosition  @default(CENTER)
+  headerHeight        String              @default("3.5rem")
+  stickyHeader        Boolean             @default(false)
+  showSearch          Boolean             @default(true)
+  showAccountIcon     Boolean             @default(true)
+  showFavoritesIcon   Boolean             @default(false)
+  showCartIcon        Boolean             @default(true)
+  topBarEnabled       Boolean             @default(false)
+  topBarText          String?
+  topBarBackground    String?
+  topBarTextColor     String?
+  announcementEnabled Boolean             @default(false)
+  announcementText    String?
+  announcementLink    String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model BlogCategory {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  description     String?
+  seoTitle        String?
+  seoDescription  String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@index([isActive])
+}
+
+model BlogPost {
+  id             String     @id @default(cuid())
+  title          String
+  slug           String     @unique
+  excerpt        String?
+  contentHtml    String     @default("")
+  coverImageId   String?
+  categoryId     String?
+  status         PageStatus @default(DRAFT)
+  authorName     String?
+  readingTime    Int?
+  tags           Json       @default("[]")
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?
+  robotsIndex    Boolean    @default(true)
+  publishedAt    DateTime?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  category  BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy User?         @relation("BlogPostCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?         @relation("BlogPostUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([publishedAt])
+}
+
+model Page {
+  id              String     @id @default(cuid())
+  title           String
+  slug            String     @unique
+  status          PageStatus @default(DRAFT)
+  pageType        PageType   @default(STANDARD)
+  excerpt         String?
+  contentHtml     String     @default("")
+  blocksJson      Json?
+  featuredImageId String?
+  seoTitle        String?
+  seoDescription  String?
+  ogImageId       String?
+  canonicalUrl    String?
+  robotsIndex     Boolean    @default(true)
+  publishedAt     DateTime?
+  createdById     String?
+  updatedById     String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  createdBy User? @relation("PageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User? @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([pageType])
+  @@index([publishedAt])
+}
+
 model SiteSetting {
   id                   String   @id @default("default")
   siteName             String   @default("")
@@ -108,6 +341,10 @@ model User {
   tenant    Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   auditLogs AuditLog[]
   mediaAssets MediaAsset[]
+  pagesCreated Page[] @relation("PageCreatedBy")
+  pagesUpdated Page[] @relation("PageUpdatedBy")
+  blogPostsCreated BlogPost[] @relation("BlogPostCreatedBy")
+  blogPostsUpdated BlogPost[] @relation("BlogPostUpdatedBy")
 
   @@index([tenantId])
   @@index([email])

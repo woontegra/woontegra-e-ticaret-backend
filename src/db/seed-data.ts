@@ -1,10 +1,112 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { MenuLocation, PageStatus, PageType, PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { SETTINGS_SINGLETON_ID } from '../types/api.js';
+import { DEFAULT_HEADER_SETTINGS } from '../lib/default-header.js';
+import { DEFAULT_THEME_SETTINGS } from '../lib/default-theme.js';
+import { toInputJson } from '../lib/json.js';
 
 export const DEMO_OWNER_PASSWORD = 'Demo@Woontegra2026!';
 export const SUPER_ADMIN_PASSWORD = 'SuperAdmin@Woontegra2026!';
 export const DEMO_STAFF_PASSWORD = 'Staff@Woontegra2026!';
+
+const LEGAL_PAGES = [
+  { title: 'Mesafeli Satış Sözleşmesi', slug: 'mesafeli-satis-sozlesmesi' },
+  { title: 'Ön Bilgilendirme Formu', slug: 'on-bilgilendirme-formu' },
+  { title: 'İade ve İptal Koşulları', slug: 'iade-ve-iptal-kosullari' },
+  { title: 'Gizlilik Politikası', slug: 'gizlilik-politikasi' },
+  { title: 'KVKK Aydınlatma Metni', slug: 'kvkk-aydinlatma-metni' },
+  { title: 'Çerez Politikası', slug: 'cerez-politikasi' },
+  { title: 'Kullanım Koşulları', slug: 'kullanim-kosullari' },
+] as const;
+
+const PLACEHOLDER_HTML =
+  '<p>Bu sayfa içeriği yönetim panelinden düzenlenebilir.</p>';
+
+export async function seedLegalPages(prisma: PrismaClient): Promise<void> {
+  for (const page of LEGAL_PAGES) {
+    await prisma.page.upsert({
+      where: { slug: page.slug },
+      update: {},
+      create: {
+        title: page.title,
+        slug: page.slug,
+        status: PageStatus.PUBLISHED,
+        pageType: PageType.LEGAL,
+        contentHtml: PLACEHOLDER_HTML,
+        excerpt: null,
+        publishedAt: new Date(),
+        robotsIndex: true,
+      },
+    });
+  }
+
+  console.log('[seed] Legal pages:', LEGAL_PAGES.length);
+}
+
+export async function seedDefaultMenus(prisma: PrismaClient): Promise<void> {
+  const menus: Array<{ name: string; location: MenuLocation }> = [
+    { name: 'Header Menüsü', location: MenuLocation.HEADER },
+    { name: 'Footer Menüsü', location: MenuLocation.FOOTER },
+    { name: 'Mobil Menü', location: MenuLocation.MOBILE },
+  ];
+
+  for (const menu of menus) {
+    await prisma.menu.upsert({
+      where: { location: menu.location },
+      update: {},
+      create: menu,
+    });
+  }
+
+  console.log('[seed] Default menus:', menus.length);
+}
+
+export async function seedDefaultFooter(prisma: PrismaClient): Promise<void> {
+  await prisma.footerSetting.upsert({
+    where: { id: SETTINGS_SINGLETON_ID },
+    update: {},
+    create: { id: SETTINGS_SINGLETON_ID },
+  });
+
+  console.log('[seed] Default footer setting initialized');
+}
+
+export async function seedDefaultTheme(prisma: PrismaClient): Promise<void> {
+  await prisma.themeSetting.upsert({
+    where: { id: SETTINGS_SINGLETON_ID },
+    update: {},
+    create: {
+      id: SETTINGS_SINGLETON_ID,
+      activeThemeKey: DEFAULT_THEME_SETTINGS.activeThemeKey,
+      colorPalette: toInputJson(DEFAULT_THEME_SETTINGS.colorPalette),
+      typography: toInputJson(DEFAULT_THEME_SETTINGS.typography),
+      layout: toInputJson(DEFAULT_THEME_SETTINGS.layout),
+      buttonStyle: toInputJson(DEFAULT_THEME_SETTINGS.buttonStyle),
+      cardStyle: toInputJson(DEFAULT_THEME_SETTINGS.cardStyle),
+      headerStyle: toInputJson(DEFAULT_THEME_SETTINGS.headerStyle),
+      productCardStyle: toInputJson(DEFAULT_THEME_SETTINGS.productCardStyle),
+      borderRadius: DEFAULT_THEME_SETTINGS.borderRadius,
+      shadowLevel: DEFAULT_THEME_SETTINGS.shadowLevel,
+      containerWidth: DEFAULT_THEME_SETTINGS.containerWidth,
+      customCss: DEFAULT_THEME_SETTINGS.customCss,
+    },
+  });
+
+  console.log('[seed] Default theme settings initialized');
+}
+
+export async function seedDefaultHeader(prisma: PrismaClient): Promise<void> {
+  await prisma.headerSetting.upsert({
+    where: { id: SETTINGS_SINGLETON_ID },
+    update: {},
+    create: {
+      id: SETTINGS_SINGLETON_ID,
+      ...DEFAULT_HEADER_SETTINGS,
+    },
+  });
+
+  console.log('[seed] Default header settings initialized');
+}
 
 export async function seedDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.siteSetting.upsert({
@@ -119,6 +221,12 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
       isActive: true,
     },
   });
+
+  await seedLegalPages(prisma);
+  await seedDefaultMenus(prisma);
+  await seedDefaultFooter(prisma);
+  await seedDefaultTheme(prisma);
+  await seedDefaultHeader(prisma);
 
   console.log('[seed] Site & company settings initialized');
   console.log('[seed] Demo tenant:', tenant.slug);
