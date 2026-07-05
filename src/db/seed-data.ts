@@ -1,4 +1,4 @@
-import { MenuLocation, PageStatus, PageType, PrismaClient, UserRole } from '@prisma/client';
+import { LayoutType, MenuLocation, PageStatus, PageType, PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { SETTINGS_SINGLETON_ID } from '../types/api.js';
 import { DEFAULT_HEADER_SETTINGS } from '../lib/default-header.js';
@@ -106,6 +106,29 @@ export async function seedDefaultHeader(prisma: PrismaClient): Promise<void> {
   });
 
   console.log('[seed] Default header settings initialized');
+}
+
+export async function seedDefaultHomeLayout(prisma: PrismaClient): Promise<void> {
+  const existing = await prisma.pageLayout.findFirst({
+    where: {
+      layoutType: LayoutType.HOME,
+      status: PageStatus.DRAFT,
+      pageId: null,
+    },
+  });
+
+  if (!existing) {
+    await prisma.pageLayout.create({
+      data: {
+        layoutType: LayoutType.HOME,
+        status: PageStatus.DRAFT,
+        pageId: null,
+        name: 'Ana Sayfa (Taslak)',
+      },
+    });
+  }
+
+  console.log('[seed] Home draft layout initialized');
 }
 
 export async function seedDatabase(prisma: PrismaClient): Promise<void> {
@@ -227,6 +250,7 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
   await seedDefaultFooter(prisma);
   await seedDefaultTheme(prisma);
   await seedDefaultHeader(prisma);
+  await seedDefaultHomeLayout(prisma);
 
   console.log('[seed] Site & company settings initialized');
   console.log('[seed] Demo tenant:', tenant.slug);

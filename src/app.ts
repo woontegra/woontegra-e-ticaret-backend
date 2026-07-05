@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
@@ -39,6 +40,7 @@ export function createApp(): Express {
   );
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
 
   if (env.STORAGE_DRIVER === 'local') {
     const storagePath = path.resolve(env.STORAGE_LOCAL_PATH);

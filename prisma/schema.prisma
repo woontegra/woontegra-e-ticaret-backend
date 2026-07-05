@@ -28,6 +28,31 @@ enum PageType {
   LANDING
 }
 
+enum LayoutType {
+  HOME
+  PAGE
+  LANDING
+}
+
+enum PageBlockType {
+  HERO
+  HERO_SLIDER
+  TEXT
+  TEXT_IMAGE
+  IMAGE_BANNER
+  PRODUCT_GRID
+  PRODUCT_CAROUSEL
+  CATEGORY_GRID
+  BLOG_GRID
+  TRUST_BADGES
+  FAQ
+  CONTACT_FORM
+  BRAND_LOGOS
+  TESTIMONIALS
+  NEWSLETTER
+  CUSTOM_SPACER
+}
+
 enum MenuLocation {
   HEADER
   FOOTER
@@ -40,6 +65,49 @@ enum MenuItemType {
   PRODUCT
   BLOG
   CUSTOM_URL
+}
+
+enum ProductKind {
+  SOFTWARE
+  PHYSICAL
+  SERVICE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  PASSIVE
+}
+
+enum ProductAttributeType {
+  TEXT
+  NUMBER
+  SELECT
+  COLOR
+  BOOLEAN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ShippingStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  DELIVERED
+  RETURNED
 }
 
 enum HeaderLogoPosition {
@@ -244,10 +312,314 @@ model Page {
 
   createdBy User? @relation("PageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   updatedBy User? @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  layouts   PageLayout[]
 
   @@index([status])
   @@index([pageType])
   @@index([publishedAt])
+}
+
+model PageLayout {
+  id          String       @id @default(cuid())
+  pageId      String?
+  layoutType  LayoutType
+  name        String
+  status      PageStatus   @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  page   Page?       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks PageBlock[]
+
+  @@index([pageId])
+  @@index([layoutType])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+model PageBlock {
+  id        String        @id @default(cuid())
+  layoutId  String
+  type      PageBlockType
+  title     String?
+  settings  Json          @default("{}")
+  content   Json          @default("{}")
+  sortOrder Int           @default(0)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  layout PageLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+
+  @@index([layoutId])
+  @@index([sortOrder])
+}
+
+model ProductCategory {
+  id              String   @id @default(cuid())
+  parentId        String?
+  name            String
+  slug            String   @unique
+  description     String?
+  imageId         String?
+  bannerImageId   String?
+  seoTitle        String?
+  seoDescription  String?
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  parent   ProductCategory?  @relation("ProductCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children ProductCategory[] @relation("ProductCategoryTree")
+  products Product[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model Brand {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  logoId          String?
+  description     String?
+  seoTitle        String?
+  seoDescription  String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  products Product[]
+
+  @@index([isActive])
+}
+
+model Product {
+  id                   String        @id @default(cuid())
+  name                 String
+  slug                 String        @unique
+  sku                  String?       @unique
+  barcode              String?
+  productKind          ProductKind   @default(PHYSICAL)
+  shortDescription     String?
+  descriptionHtml      String        @default("")
+  categoryId           String?
+  brandId              String?
+  status               ProductStatus @default(DRAFT)
+  basePrice            Decimal?      @db.Decimal(12, 2)
+  salePrice            Decimal?      @db.Decimal(12, 2)
+  taxRate              Decimal?      @db.Decimal(5, 2)
+  stockTrackingEnabled Boolean       @default(false)
+  stockQuantity        Int?
+  lowStockThreshold    Int?
+  mainImageId          String?
+  galleryImageIds      Json          @default("[]")
+  tags                 Json          @default("[]")
+  isFeatured           Boolean       @default(false)
+  isNew                Boolean       @default(false)
+  isBestSeller         Boolean       @default(false)
+  demoUrl              String?
+  purchaseUrl          String?
+  downloadUrl          String?
+  seoTitle             String?
+  seoDescription       String?
+  ogImageId            String?
+  canonicalUrl         String?
+  robotsIndex          Boolean       @default(true)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  category ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brand    Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  attributeAssignments ProductAttributeAssignment[]
+  variants             ProductVariant[]
+  cartItems            CartItem[]
+  orderItems           OrderItem[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([productKind])
+  @@index([isFeatured])
+}
+
+model ProductAttribute {
+  id              String               @id @default(cuid())
+  name            String
+  code            String               @unique
+  type            ProductAttributeType
+  isFilterable    Boolean              @default(false)
+  isVariantOption Boolean              @default(false)
+  sortOrder       Int                  @default(0)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  values         ProductAttributeValue[]
+  assignments    ProductAttributeAssignment[]
+  variantOptions ProductVariantOption[]
+
+  @@index([isFilterable])
+  @@index([isVariantOption])
+  @@index([sortOrder])
+}
+
+model ProductAttributeValue {
+  id          String   @id @default(cuid())
+  attributeId String
+  value       String
+  colorHex    String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attribute      ProductAttribute             @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  assignments    ProductAttributeAssignment[]
+  variantOptions ProductVariantOption[]
+
+  @@unique([attributeId, value])
+  @@index([attributeId])
+  @@index([sortOrder])
+}
+
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  sku           String?
+  barcode       String?
+  price         Decimal? @db.Decimal(12, 2)
+  salePrice     Decimal? @db.Decimal(12, 2)
+  stockQuantity Int?
+  imageId       String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options ProductVariantOption[]
+  cartItems CartItem[]
+  orderItems  OrderItem[]
+
+  @@index([productId])
+  @@index([isActive])
+}
+
+model ProductVariantOption {
+  id               String @id @default(cuid())
+  variantId        String
+  attributeId      String
+  attributeValueId String
+
+  variant        ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attribute      ProductAttribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  attributeValue ProductAttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, attributeId])
+  @@index([variantId])
+  @@index([attributeId])
+  @@index([attributeValueId])
+}
+
+model ProductAttributeAssignment {
+  id               String   @id @default(cuid())
+  productId        String
+  attributeId      String
+  valueText        String?
+  valueNumber      Decimal? @db.Decimal(12, 4)
+  valueBoolean     Boolean?
+  attributeValueId String?
+
+  product        Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attribute      ProductAttribute       @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  attributeValue ProductAttributeValue? @relation(fields: [attributeValueId], references: [id], onDelete: SetNull)
+
+  @@unique([productId, attributeId])
+  @@index([productId])
+  @@index([attributeId])
+  @@index([attributeValueId])
+}
+
+model Cart {
+  id         String   @id @default(cuid())
+  sessionId  String?  @unique
+  customerId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items CartItem[]
+
+  @@index([customerId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  variantId String?
+  quantity  Int      @default(1)
+  unitPrice Decimal  @db.Decimal(12, 2)
+  taxRate   Decimal? @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Order {
+  id             String          @id @default(cuid())
+  orderNumber    String          @unique
+  customerId     String?
+  status         OrderStatus     @default(PENDING)
+  paymentStatus  PaymentStatus   @default(PENDING)
+  shippingStatus ShippingStatus?
+  subtotal       Decimal         @db.Decimal(12, 2)
+  taxTotal       Decimal         @db.Decimal(12, 2)
+  shippingTotal  Decimal         @db.Decimal(12, 2) @default(0)
+  discountTotal  Decimal         @db.Decimal(12, 2) @default(0)
+  grandTotal     Decimal         @db.Decimal(12, 2)
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  note           String?
+  adminNote      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  items OrderItem[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([shippingStatus])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  productId    String?
+  variantId    String?
+  nameSnapshot String
+  skuSnapshot  String?
+  quantity     Int
+  unitPrice    Decimal  @db.Decimal(12, 2)
+  taxRate      Decimal? @db.Decimal(5, 2)
+  total        Decimal  @db.Decimal(12, 2)
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model SiteSetting {

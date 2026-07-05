@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { createApp } from './app.js';
 import { env } from './config/index.js';
-import { seedDatabase, seedDefaultFooter, seedDefaultHeader, seedDefaultMenus, seedDefaultTheme, seedLegalPages } from './db/seed-data.js';
+import { seedDatabase, seedDefaultFooter, seedDefaultHeader, seedDefaultHomeLayout, seedDefaultMenus, seedDefaultTheme, seedLegalPages } from './db/seed-data.js';
 import { prisma } from './lib/prisma.js';
 
 const app = createApp();
@@ -66,6 +66,13 @@ async function start() {
         if (headerCount === 0) {
           console.log('[api] No header settings — seeding default header...');
           await seedDefaultHeader(prisma);
+        }
+        const homeDraftCount = await prisma.pageLayout.count({
+          where: { layoutType: 'HOME', status: 'DRAFT', pageId: null },
+        });
+        if (homeDraftCount === 0) {
+          console.log('[api] No home layout — seeding home draft...');
+          await seedDefaultHomeLayout(prisma);
         }
       }
     }

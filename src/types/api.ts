@@ -411,3 +411,480 @@ export interface HeaderSettingDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export type LayoutType = 'HOME' | 'PAGE' | 'LANDING';
+export type PageBlockType =
+  | 'HERO'
+  | 'HERO_SLIDER'
+  | 'TEXT'
+  | 'TEXT_IMAGE'
+  | 'IMAGE_BANNER'
+  | 'PRODUCT_GRID'
+  | 'PRODUCT_CAROUSEL'
+  | 'CATEGORY_GRID'
+  | 'BLOG_GRID'
+  | 'TRUST_BADGES'
+  | 'FAQ'
+  | 'CONTACT_FORM'
+  | 'BRAND_LOGOS'
+  | 'TESTIMONIALS'
+  | 'NEWSLETTER'
+  | 'CUSTOM_SPACER';
+
+export interface PageBlockDto {
+  id: string;
+  layoutId: string;
+  type: PageBlockType;
+  title: string | null;
+  settings: Record<string, unknown>;
+  content: Record<string, unknown>;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PageLayoutDto {
+  id: string;
+  pageId: string | null;
+  layoutType: LayoutType;
+  name: string;
+  status: PageStatus;
+  publishedAt: string | null;
+  blocks?: PageBlockDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicPageBlockDto {
+  id: string;
+  type: PageBlockType;
+  title: string | null;
+  settings: Record<string, unknown>;
+  content: Record<string, unknown>;
+}
+
+export interface PublicHomeLayoutDto {
+  id: string;
+  name: string;
+  layoutType: LayoutType;
+  publishedAt: string | null;
+  blocks: PublicPageBlockDto[];
+}
+
+export interface ReorderLayoutBlocksInput {
+  items: Array<{
+    id: string;
+    sortOrder: number;
+  }>;
+}
+
+export type ProductKind = 'SOFTWARE' | 'PHYSICAL' | 'SERVICE';
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'PASSIVE';
+
+export interface ProductCategoryDto {
+  id: string;
+  parentId: string | null;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageId: string | null;
+  bannerImageId: string | null;
+  imageUrl?: string | null;
+  bannerImageUrl?: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrandDto {
+  id: string;
+  name: string;
+  slug: string;
+  logoId: string | null;
+  logoUrl?: string | null;
+  description: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductCategorySummaryDto {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl?: string | null;
+}
+
+export interface BrandSummaryDto {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string | null;
+}
+
+export interface ProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string | null;
+  barcode: string | null;
+  productKind: ProductKind;
+  shortDescription: string | null;
+  descriptionHtml: string;
+  categoryId: string | null;
+  category: ProductCategorySummaryDto | null;
+  brandId: string | null;
+  brand: BrandSummaryDto | null;
+  status: ProductStatus;
+  basePrice: number | null;
+  salePrice: number | null;
+  taxRate: number | null;
+  stockTrackingEnabled: boolean;
+  stockQuantity: number | null;
+  lowStockThreshold: number | null;
+  mainImageId: string | null;
+  mainImageUrl: string | null;
+  galleryImageIds: string[];
+  galleryImageUrls: string[];
+  tags: string[];
+  isFeatured: boolean;
+  isNew: boolean;
+  isBestSeller: boolean;
+  demoUrl: string | null;
+  purchaseUrl: string | null;
+  downloadUrl: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  ogImageId: string | null;
+  ogImageUrl: string | null;
+  canonicalUrl: string | null;
+  robotsIndex: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductListResult {
+  items: ProductDto[];
+  total: number;
+}
+
+export interface PublicProductCategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  bannerImageUrl?: string | null;
+  productCount?: number;
+}
+
+export interface PublicProductCategoryDetailDto extends PublicProductCategoryDto {
+  seoTitle: string | null;
+  seoDescription: string | null;
+}
+
+export interface PublicBrandSummaryDto {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  description: string | null;
+  productCount?: number;
+}
+
+export interface PublicBrandDetailDto extends PublicBrandSummaryDto {
+  seoTitle: string | null;
+  seoDescription: string | null;
+  productCount: number;
+}
+
+export interface PublicProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string | null;
+  productKind: ProductKind;
+  price: number | null;
+  basePrice: number | null;
+  salePrice: number | null;
+  imageUrl: string | null;
+  isFeatured: boolean;
+  isNew: boolean;
+  isBestSeller: boolean;
+  demoUrl: string | null;
+  purchaseUrl: string | null;
+  category: { id: string; name: string; slug: string } | null;
+  brand: PublicBrandSummaryDto | null;
+}
+
+export type PublicProductSort =
+  | 'featured'
+  | 'newest'
+  | 'price_asc'
+  | 'price_desc';
+
+export interface PublicCatalogListResult<T> {
+  items: T[];
+  total: number;
+}
+
+export interface PublicProductDetailDto extends PublicProductDto {
+  descriptionHtml: string;
+  galleryImageUrls: string[];
+  tags: string[];
+  demoUrl: string | null;
+  purchaseUrl: string | null;
+  downloadUrl: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  ogImageUrl: string | null;
+  canonicalUrl: string | null;
+  robotsIndex: boolean;
+  attributes: PublicProductAttributeRowDto[];
+  variantAttributes: PublicVariantAttributeDto[];
+  variants: PublicProductVariantDto[];
+}
+
+export type ProductAttributeType =
+  | 'TEXT'
+  | 'NUMBER'
+  | 'SELECT'
+  | 'COLOR'
+  | 'BOOLEAN';
+
+export interface ProductAttributeValueDto {
+  id: string;
+  attributeId: string;
+  value: string;
+  colorHex: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductAttributeDto {
+  id: string;
+  name: string;
+  code: string;
+  type: ProductAttributeType;
+  isFilterable: boolean;
+  isVariantOption: boolean;
+  sortOrder: number;
+  values: ProductAttributeValueDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductAttributeSummaryDto {
+  id: string;
+  name: string;
+  code: string;
+  type: ProductAttributeType;
+  isFilterable: boolean;
+  isVariantOption: boolean;
+}
+
+export interface ProductAttributeAssignmentDto {
+  id: string;
+  productId: string;
+  attributeId: string;
+  attribute: ProductAttributeSummaryDto;
+  valueText: string | null;
+  valueNumber: number | null;
+  valueBoolean: boolean | null;
+  attributeValueId: string | null;
+  attributeValue: ProductAttributeValueDto | null;
+}
+
+export interface ProductVariantOptionDto {
+  id: string;
+  variantId: string;
+  attributeId: string;
+  attributeValueId: string;
+  attribute: {
+    id: string;
+    name: string;
+    code: string;
+    type: ProductAttributeType;
+  };
+  attributeValue: ProductAttributeValueDto;
+}
+
+export interface ProductVariantDto {
+  id: string;
+  productId: string;
+  sku: string | null;
+  barcode: string | null;
+  price: number | null;
+  salePrice: number | null;
+  stockQuantity: number | null;
+  imageId: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  options: ProductVariantOptionDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GenerateVariantsResultDto {
+  created: ProductVariantDto[];
+  variants: ProductVariantDto[];
+}
+
+export interface FilterableAttributeDto {
+  id: string;
+  name: string;
+  code: string;
+  type: ProductAttributeType;
+  values: ProductAttributeValueDto[];
+}
+
+export interface PublicProductAttributeRowDto {
+  name: string;
+  code: string;
+  type: ProductAttributeType;
+  value: string;
+  isFilterable: boolean;
+  colorHex: string | null;
+}
+
+export interface PublicVariantAttributeDto {
+  attributeId: string;
+  name: string;
+  code: string;
+  type: ProductAttributeType;
+  values: Array<{
+    id: string;
+    value: string;
+    colorHex: string | null;
+  }>;
+}
+
+export interface PublicProductVariantDto {
+  id: string;
+  sku: string | null;
+  price: number | null;
+  salePrice: number | null;
+  stockQuantity: number | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  options: Array<{
+    attributeId: string;
+    attributeCode: string;
+    attributeValueId: string;
+    value: string;
+    colorHex: string | null;
+  }>;
+}
+
+export type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+
+export type ShippingStatus =
+  | 'PENDING'
+  | 'PREPARING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'RETURNED';
+
+export interface CartItemDto {
+  id: string;
+  cartId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number | null;
+  lineTotal: number;
+  productName: string;
+  productSlug: string;
+  productKind: ProductKind;
+  lineLabel: string;
+  imageUrl: string | null;
+}
+
+export interface CartDto {
+  id: string;
+  items: CartItemDto[];
+  itemCount: number;
+  subtotal: number;
+  taxTotal: number;
+  grandTotal: number;
+}
+
+export interface CartSummaryDto {
+  itemCount: number;
+  grandTotal: number;
+}
+
+export interface OrderItemDto {
+  id: string;
+  orderId: string;
+  productId: string | null;
+  variantId: string | null;
+  nameSnapshot: string;
+  skuSnapshot: string | null;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number | null;
+  total: number;
+}
+
+export interface OrderDto {
+  id: string;
+  orderNumber: string;
+  customerId: string | null;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  shippingStatus: ShippingStatus | null;
+  subtotal: number;
+  taxTotal: number;
+  shippingTotal: number;
+  discountTotal: number;
+  grandTotal: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  note: string | null;
+  adminNote: string | null;
+  items: OrderItemDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderSummaryDto {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  shippingStatus: ShippingStatus | null;
+  grandTotal: number;
+  customerName: string;
+  customerEmail: string;
+  itemCount: number;
+  createdAt: string;
+}
+
+export interface OrderListResult {
+  items: OrderSummaryDto[];
+  total: number;
+}
+
+export interface CheckoutInput {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  note?: string | null;
+}
