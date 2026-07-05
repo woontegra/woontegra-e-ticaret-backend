@@ -27,6 +27,7 @@ blogPostsAdminRouter.delete('/:id', asyncHandler(blogPostController.deletePost))
 blogPostsAdminRouter.post('/:id/publish', asyncHandler(blogPostController.publishPost));
 blogPostsAdminRouter.post('/:id/unpublish', asyncHandler(blogPostController.unpublishPost));
 
+blogPublicRouter.get('/categories', asyncHandler(blogCategoryController.listPublicCategories));
 blogPublicRouter.get('/posts', asyncHandler(blogPostController.listPublicPosts));
 blogPublicRouter.get(
   '/posts/:slug',

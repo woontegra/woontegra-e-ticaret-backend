@@ -6,6 +6,7 @@ export interface PaymentProviderContext {
   order: Order;
   method: PaymentMethod;
   isTestMode: boolean;
+  clientIp?: string;
 }
 
 export interface PaymentProvider {

@@ -21,6 +21,9 @@ const paytrConfigSchema = z.object({
   merchantId: z.string().max(200).default(''),
   merchantKey: z.string().max(500).default(''),
   merchantSalt: z.string().max(500).default(''),
+  successUrl: z.string().max(500).nullable().optional(),
+  failUrl: z.string().max(500).nullable().optional(),
+  callbackUrl: z.string().max(500).nullable().optional(),
 });
 
 const iyzicoConfigSchema = z.object({
@@ -63,3 +66,8 @@ export function validatePaymentMethodConfig(
 export type UpdatePaymentMethodInput = z.infer<
   typeof updatePaymentMethodSchema
 >;
+
+export const paytrStartSchema = z.object({
+  orderNumber: z.string().min(1).max(64),
+  email: z.string().email(),
+});

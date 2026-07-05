@@ -38,6 +38,15 @@ export async function listBlogCategories() {
   return categories.map(toBlogCategoryDto);
 }
 
+export async function listPublicBlogCategories() {
+  const categories = await prisma.blogCategory.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' },
+  });
+
+  return categories.map(toBlogCategoryDto);
+}
+
 export async function getBlogCategoryById(id: string) {
   const category = await prisma.blogCategory.findUnique({ where: { id } });
 

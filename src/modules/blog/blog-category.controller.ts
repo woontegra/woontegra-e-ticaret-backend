@@ -11,6 +11,11 @@ export async function listCategories(_req: Request, res: Response) {
   sendSuccess(res, data);
 }
 
+export async function listPublicCategories(_req: Request, res: Response) {
+  const data = await blogCategoryService.listPublicBlogCategories();
+  sendSuccess(res, data);
+}
+
 export async function getCategory(req: Request, res: Response) {
   const data = await blogCategoryService.getBlogCategoryById(req.params.id);
   sendSuccess(res, data);

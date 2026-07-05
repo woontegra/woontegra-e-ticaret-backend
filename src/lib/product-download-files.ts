@@ -1,24 +1,29 @@
 import { z } from 'zod';
 
+const nullableString = z.string().nullable().optional();
+
 export const productDownloadFileSchema = z.object({
   label: z.string(),
-  url: z.string().optional().default(''),
-  type: z.enum(['setup', 'portable', 'other']).optional(),
-  mediaAssetId: z.string().optional(),
-  storageProvider: z.enum(['LOCAL', 'VERCEL_BLOB', 'R2']).optional(),
-  storageKey: z.string().optional(),
-  fileName: z.string().optional(),
-  originalName: z.string().optional(),
-  mimeType: z.string().optional(),
-  version: z.string().optional(),
-  size: z.string().optional(),
-  sha256: z.string().optional(),
-  buttonLabel: z.string().optional(),
+  url: z.string().nullable().optional().transform((value) => value ?? ''),
+  type: z.enum(['setup', 'portable', 'other']).nullable().optional(),
+  mediaAssetId: nullableString,
+  storageProvider: z
+    .enum(['LOCAL', 'VERCEL_BLOB', 'R2'])
+    .nullable()
+    .optional(),
+  storageKey: nullableString,
+  fileName: nullableString,
+  originalName: nullableString,
+  mimeType: nullableString,
+  version: nullableString,
+  size: nullableString,
+  sha256: nullableString,
+  buttonLabel: nullableString,
 });
 
 export const productDownloadFilesSchema = z
   .object({
-    version: z.string().optional(),
+    version: nullableString,
     publicFreeDownload: z.boolean().optional(),
     showAfterPaymentOnly: z.boolean().optional(),
     files: z.array(productDownloadFileSchema).optional(),

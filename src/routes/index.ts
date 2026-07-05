@@ -66,6 +66,7 @@ import {
 import {
   paymentMethodsAdminRouter,
   paymentMethodsPublicRouter,
+  paymentsPublicRouter,
 } from '../modules/payment/index.js';
 import {
   contactMessagesAdminRouter,
@@ -162,6 +163,7 @@ apiRouter.use('/public/layouts', layoutsPublicRouter);
 apiRouter.use('/public/cart', cartPublicRouter);
 apiRouter.use('/public/checkout', checkoutPublicRouter);
 apiRouter.use('/public/payment-methods', paymentMethodsPublicRouter);
+apiRouter.use('/public/payments', paymentsPublicRouter);
 apiRouter.use('/public/contact', contactPublicRouter);
 apiRouter.use('/public/newsletter', newsletterPublicRouter);
 apiRouter.use('/public', reviewsPublicRouter);

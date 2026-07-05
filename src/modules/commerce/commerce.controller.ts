@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 import { resolveCartSessionId } from '../../lib/cart-session.js';
+import { getClientIp } from '../../lib/client-ip.js';
 import { sendCreated, sendSuccess } from '../../lib/response.js';
 import {
   addCartItemSchema,
@@ -60,7 +61,12 @@ export { applyCartCoupon, removeCartCoupon };
 export async function checkout(req: Request, res: Response) {
   const sessionId = resolveCartSessionId(req, res);
   const input = checkoutSchema.parse(req.body);
-  const data = await checkoutService.checkout(sessionId, input, req.customer?.id);
+  const data = await checkoutService.checkout(
+    sessionId,
+    input,
+    req.customer?.id,
+    getClientIp(req),
+  );
   sendCreated(res, data);
 }
 

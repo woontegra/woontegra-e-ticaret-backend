@@ -5,6 +5,7 @@ import type {
   PublicHomeLayoutDto,
   PublicPageBlockDto,
 } from '../types/api.js';
+import { hydrateBlocksMediaFields } from './block-content-media.js';
 
 function parseJsonObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -46,19 +47,25 @@ export function toPageLayoutDto(
   };
 }
 
-export function toPublicPageBlockDto(
+export async function toPublicPageBlockDto(
   block: Pick<PageBlock, 'id' | 'type' | 'title' | 'settings' | 'content'>,
-): PublicPageBlockDto {
+): Promise<PublicPageBlockDto> {
+  const content = parseJsonObject(block.content);
+  const settings = parseJsonObject(block.settings);
+  const [hydrated] = await hydrateBlocksMediaFields([
+    { ...block, content, settings },
+  ]);
+
   return {
     id: block.id,
     type: block.type,
     title: block.title,
-    settings: parseJsonObject(block.settings),
-    content: parseJsonObject(block.content),
+    settings: hydrated!.settings,
+    content: hydrated!.content,
   };
 }
 
-export function toPublicHomeLayoutDto(
+export async function toPublicHomeLayoutDto(
   layout: Pick<
     PageLayout,
     'id' | 'name' | 'layoutType' | 'publishedAt'
@@ -67,12 +74,28 @@ export function toPublicHomeLayoutDto(
     PageBlock,
     'id' | 'type' | 'title' | 'settings' | 'content'
   >[],
-): PublicHomeLayoutDto {
+): Promise<PublicHomeLayoutDto> {
+  const parsedBlocks = blocks.map((block) => ({
+    id: block.id,
+    type: block.type,
+    title: block.title,
+    content: parseJsonObject(block.content),
+    settings: parseJsonObject(block.settings),
+  }));
+
+  const hydratedBlocks = await hydrateBlocksMediaFields(parsedBlocks);
+
   return {
     id: layout.id,
     name: layout.name,
     layoutType: layout.layoutType,
     publishedAt: layout.publishedAt?.toISOString() ?? null,
-    blocks: blocks.map(toPublicPageBlockDto),
+    blocks: hydratedBlocks.map((block) => ({
+      id: block.id,
+      type: block.type,
+      title: block.title,
+      settings: block.settings,
+      content: block.content,
+    })),
   };
 }

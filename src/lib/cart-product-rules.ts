@@ -46,6 +46,41 @@ export function buildFulfillmentMessages(
 ): string[] {
   const messages: string[] = [];
 
+  if (paymentStatus === 'FAILED') {
+    messages.push('Ödeme başarısız oldu. Lütfen tekrar deneyin veya farklı bir yöntem seçin.');
+    return messages;
+  }
+
+  if (paymentStatus === 'PENDING' && paymentMethodType === 'PAYTR') {
+    messages.push('Ödeme sonucunuz kontrol ediliyor.');
+  }
+
+  if (
+    paymentStatus === 'WAITING_BANK_TRANSFER' ||
+    (paymentMethodType === 'BANK_TRANSFER' && paymentStatus !== 'PAID')
+  ) {
+    messages.push(
+      'Ödemeniz onaylandıktan sonra teslimat yapılacaktır.',
+    );
+  }
+
+  if (paymentStatus === 'PAID') {
+    if (deliveryModes.includes('PAID_DOWNLOAD')) {
+      messages.push(
+        'İndirme linkleriniz hazırlandı veya e-posta ile gönderildi.',
+      );
+    }
+    if (deliveryModes.includes('LICENSED_DOWNLOAD')) {
+      messages.push(
+        'Kurulum ve lisans bilgileriniz hazırlanmıştır.',
+      );
+    }
+    if (deliveryModes.includes('SAAS')) {
+      messages.push('SaaS hesabınız hazırlanmıştır.');
+    }
+    return [...new Set(messages)];
+  }
+
   if (paymentMethodType === 'BANK_TRANSFER') {
     messages.push(
       'Havale/EFT ödemeniz onaylandıktan sonra dijital teslimat başlatılacaktır.',
@@ -57,29 +92,22 @@ export function buildFulfillmentMessages(
     }
   }
 
-  if (deliveryModes.includes('PAID_DOWNLOAD')) {
+  if (deliveryModes.includes('PAID_DOWNLOAD') && paymentStatus !== 'PAID') {
     messages.push(
       'Ödeme tamamlandıktan sonra indirme bağlantınız hazırlanacaktır.',
     );
   }
 
-  if (deliveryModes.includes('LICENSED_DOWNLOAD')) {
+  if (deliveryModes.includes('LICENSED_DOWNLOAD') && paymentStatus !== 'PAID') {
     messages.push(
       'Ödeme tamamlandıktan sonra lisans ve kurulum bilgileriniz gönderilecektir.',
     );
   }
 
-  if (deliveryModes.includes('SAAS')) {
+  if (deliveryModes.includes('SAAS') && paymentStatus !== 'PAID') {
     messages.push(
       'Ödeme tamamlandıktan sonra abonelik/hizmet hesabınız hazırlanacaktır.',
     );
-  }
-
-  if (
-    paymentMethodType === 'PAYTR' &&
-    paymentStatus === 'PENDING'
-  ) {
-    messages.push('Ödeme sonucunuz kontrol ediliyor.');
   }
 
   return [...new Set(messages)];

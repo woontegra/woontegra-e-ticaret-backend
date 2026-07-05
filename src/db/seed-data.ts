@@ -1,5 +1,6 @@
 import {
   LayoutType,
+  MenuItemType,
   MenuLocation,
   PageBlockType,
   PageStatus,
@@ -49,6 +50,22 @@ const STOREFRONT_CMS_SLUGS = [
   'siparis-basarili',
 ] as const;
 
+const DEMO_PRODUCT_SLUGS = [
+  'muvekkil-kasa-defteri-masaustu',
+  'muvekkil-kasa-web-tabanli',
+  'woontegra-sifre-kasasi',
+  'ozel-yazilim-gelistirme',
+] as const;
+
+const DEFAULT_HEADER_MENU_ITEMS = [
+  { label: 'Ana Sayfa', url: '/', sortOrder: 0 },
+  { label: 'Yazılımlar', url: '/yazilimlar', sortOrder: 1 },
+  { label: 'Hizmetler', url: '/iletisim?konu=Hizmetler', sortOrder: 2 },
+  { label: 'Blog', url: '/blog', sortOrder: 3 },
+  { label: 'Hakkımızda', url: '/sayfa/hakkimizda', sortOrder: 4 },
+  { label: 'İletişim', url: '/iletisim', sortOrder: 5 },
+] as const;
+
 const STARTER_HOME_BLOCKS: Array<{
   type: PageBlockType;
   sortOrder: number;
@@ -58,20 +75,99 @@ const STARTER_HOME_BLOCKS: Array<{
   {
     type: PageBlockType.HERO,
     sortOrder: 0,
-    settings: { paddingTop: '2rem', paddingBottom: '2rem', desktopHeight: '420px' },
-    content: { headline: '', subheadline: '', ctaLabel: '', ctaUrl: '' },
+    settings: {
+      paddingTop: '0',
+      paddingBottom: '0',
+      fullWidth: true,
+      containerMode: 'FULL_WIDTH',
+      variant: 'SIMPLE',
+    },
+    content: {
+      headline: 'Woontegra Teknoloji Yazılım ve Dijital Hizmetler',
+      subheadline: 'İşletmeniz için güvenilir yazılım çözümleri',
+      description:
+        'Masaüstü yazılımlardan SaaS platformlarına; güvenli lisanslama ve dijital teslimat.',
+      ctaLabel: 'Yazılımları İncele',
+      ctaUrl: '/yazilimlar',
+      secondaryCtaLabel: 'İletişime Geç',
+      secondaryCtaUrl: '/iletisim',
+    },
   },
   {
     type: PageBlockType.PRODUCT_GRID,
     sortOrder: 1,
-    settings: { itemCount: 8, columns: 4 },
-    content: { headline: '', description: '' },
+    settings: {
+      itemCount: 6,
+      columns: 3,
+      productKind: 'SOFTWARE',
+      displayMode: 'GRID',
+      cardStyle: 'PREMIUM',
+      showPrice: true,
+      showBadge: true,
+      showDescription: true,
+      showCta: true,
+    },
+    content: {
+      headline: 'Yazılım çözümlerimiz',
+      description: 'Aktif yazılım ürünlerimizi keşfedin',
+    },
+  },
+  {
+    type: PageBlockType.TEXT,
+    sortOrder: 2,
+    settings: {},
+    content: {
+      headline: 'Hizmetler ve çözümler',
+      subheadline: 'Dijital dönüşüm ortağınız',
+      body: 'Web yazılım geliştirme · SaaS ürün geliştirme · E-ticaret altyapısı · Masaüstü yazılım',
+    },
+  },
+  {
+    type: PageBlockType.TRUST_BADGES,
+    sortOrder: 3,
+    settings: {},
+    content: {
+      headline: 'Neden Woontegra?',
+      badges: [
+        {
+          label: 'Güvenli lisanslama',
+          description: 'Merkezi lisans yönetimi',
+          iconType: 'SHIELD',
+          isActive: true,
+          sortOrder: 0,
+        },
+        {
+          label: 'Dijital teslimat',
+          description: 'Hızlı erişim ve kurulum',
+          iconType: 'DOWNLOAD',
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          label: 'Teknik destek',
+          description: 'Kurulum ve kullanım desteği',
+          iconType: 'HEADPHONES',
+          isActive: true,
+          sortOrder: 2,
+        },
+        {
+          label: 'Kurumsal çözüm',
+          description: 'Ölçeklenebilir altyapı',
+          iconType: 'CHECK',
+          isActive: true,
+          sortOrder: 3,
+        },
+      ],
+    },
   },
   {
     type: PageBlockType.BLOG_GRID,
-    sortOrder: 2,
-    settings: { itemCount: 3, columns: 3 },
-    content: { headline: '', description: '' },
+    sortOrder: 4,
+    settings: { itemCount: 3, columns: 3, displayMode: 'GRID', showCover: true, showExcerpt: true, showDate: true, showCategory: true },
+    content: {
+      headline: 'Son blog yazıları',
+      description: 'Yazılım ve dijital dönüşüm içerikleri',
+    },
   },
 ];
 
@@ -114,6 +210,54 @@ export async function seedDefaultMenus(prisma: PrismaClient): Promise<void> {
   console.log('[seed] Default menus:', menus.length);
 }
 
+async function seedMenuItemsIfEmpty(
+  prisma: PrismaClient,
+  location: MenuLocation,
+): Promise<number> {
+  const menu = await prisma.menu.findUnique({ where: { location } });
+  if (!menu) return 0;
+
+  const count = await prisma.menuItem.count({ where: { menuId: menu.id } });
+  if (count > 0) return 0;
+
+  for (const item of DEFAULT_HEADER_MENU_ITEMS) {
+    await prisma.menuItem.create({
+      data: {
+        menuId: menu.id,
+        label: item.label,
+        type: MenuItemType.CUSTOM_URL,
+        url: item.url,
+        sortOrder: item.sortOrder,
+        isActive: true,
+      },
+    });
+  }
+
+  return DEFAULT_HEADER_MENU_ITEMS.length;
+}
+
+export async function seedDefaultMenuItems(prisma: PrismaClient): Promise<void> {
+  const headerCount = await seedMenuItemsIfEmpty(prisma, MenuLocation.HEADER);
+  const mobileCount = await seedMenuItemsIfEmpty(prisma, MenuLocation.MOBILE);
+
+  if (headerCount > 0 || mobileCount > 0) {
+    console.log(
+      `[seed] Default menu items: header=${headerCount}, mobile=${mobileCount}`,
+    );
+  }
+}
+
+export async function passivateDemoProducts(prisma: PrismaClient): Promise<void> {
+  const result = await prisma.product.updateMany({
+    where: { slug: { in: [...DEMO_PRODUCT_SLUGS] } },
+    data: { status: ProductStatus.PASSIVE },
+  });
+
+  if (result.count > 0) {
+    console.log(`[seed] Passivated ${result.count} demo/placeholder products`);
+  }
+}
+
 export async function seedDefaultFooter(prisma: PrismaClient): Promise<void> {
   await prisma.footerSetting.upsert({
     where: { id: SETTINGS_SINGLETON_ID },
@@ -151,7 +295,18 @@ export async function seedDefaultTheme(prisma: PrismaClient): Promise<void> {
 export async function seedDefaultHeader(prisma: PrismaClient): Promise<void> {
   await prisma.headerSetting.upsert({
     where: { id: SETTINGS_SINGLETON_ID },
-    update: {},
+    update: {
+      logoPosition: 'LEFT',
+      menuPosition: 'CENTER',
+      stickyHeader: true,
+      headerHeight: '4rem',
+      showSearch: true,
+      showAccountIcon: true,
+      showCartIcon: true,
+      accountUrl: '/giris',
+      searchPlaceholder: 'Ürün veya yazılım ara…',
+      cartUrl: '/sepet',
+    },
     create: {
       id: SETTINGS_SINGLETON_ID,
       ...DEFAULT_HEADER_SETTINGS,
@@ -271,7 +426,7 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       licenseAppCode: 'MUVEKKIL_KASA_DESKTOP',
       licenseDays: 365,
       licenseMaxDevices: 1,
-      status: ProductStatus.ACTIVE,
+      status: ProductStatus.PASSIVE,
       categoryId: category.id,
       brandId: brand.id,
       basePrice: 4990,
@@ -282,8 +437,8 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       downloadFiles: downloadFilesTemplate,
       featureBullets: ['Merkezi lisans', 'Kurulum ve portable sürüm', '365 gün lisans'],
       descriptionHtml: PLACEHOLDER_HTML,
-      shortDescription: 'Masaüstü avukatlık ofis yönetim yazılımı',
-      isFeatured: true,
+      shortDescription: 'Masaüstü avukatlık ofis yönetim yazılımı (demo)',
+      isFeatured: false,
     },
   });
 
@@ -298,7 +453,7 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       saasAppCode: 'MUVEKKIL_KASA_SAAS',
       saasRequiresLogin: true,
       licenseMonths: 12,
-      status: ProductStatus.ACTIVE,
+      status: ProductStatus.PASSIVE,
       categoryId: category.id,
       brandId: brand.id,
       basePrice: 5990,
@@ -306,8 +461,8 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       currency: 'TRY',
       taxRate: 20,
       descriptionHtml: PLACEHOLDER_HTML,
-      shortDescription: 'Web tabanlı SaaS avukatlık ofis yönetimi',
-      isFeatured: true,
+      shortDescription: 'Web tabanlı SaaS avukatlık ofis yönetimi (demo)',
+      isFeatured: false,
     },
   });
 
@@ -322,7 +477,7 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       basePrice: 0,
       salePrice: 0,
       currency: 'TRY',
-      status: ProductStatus.ACTIVE,
+      status: ProductStatus.PASSIVE,
       categoryId: category.id,
       brandId: brand.id,
       downloadFiles: {
@@ -331,8 +486,8 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
         showAfterPaymentOnly: false,
       },
       descriptionHtml: PLACEHOLDER_HTML,
-      shortDescription: 'Ücretsiz şifre yönetim aracı',
-      isNew: true,
+      shortDescription: 'Ücretsiz şifre yönetim aracı (demo)',
+      isNew: false,
     },
   });
 
@@ -343,11 +498,11 @@ export async function seedDemoCatalog(prisma: PrismaClient): Promise<void> {
       productKind: ProductKind.SERVICE,
       deliveryMode: DeliveryMode.QUOTE_ONLY,
       purchaseEnabled: false,
-      status: ProductStatus.ACTIVE,
+      status: ProductStatus.PASSIVE,
       categoryId: category.id,
       brandId: brand.id,
       descriptionHtml: PLACEHOLDER_HTML,
-      shortDescription: 'Kurumsal yazılım projeleri için teklif alın',
+      shortDescription: 'Kurumsal yazılım projeleri için teklif alın (demo)',
     },
   });
 
@@ -403,6 +558,39 @@ export async function seedDefaultShippingCarrier(
   });
 
   console.log('[seed] Default shipping carrier initialized');
+}
+
+export async function enrichStarterHomeLayout(prisma: PrismaClient): Promise<void> {
+  const layouts = await prisma.pageLayout.findMany({
+    where: { layoutType: LayoutType.HOME, pageId: null },
+    include: { blocks: true },
+  });
+
+  for (const layout of layouts) {
+    const heroBlock = layout.blocks.find((block) => block.type === PageBlockType.HERO);
+    if (!heroBlock) continue;
+
+    const content = heroBlock.content as Record<string, unknown>;
+    if (typeof content.headline === 'string' && content.headline.trim()) {
+      continue;
+    }
+
+    await prisma.pageBlock.deleteMany({ where: { layoutId: layout.id } });
+    await prisma.pageBlock.createMany({
+      data: STARTER_HOME_BLOCKS.map((block) => ({
+        layoutId: layout.id,
+        type: block.type,
+        title: '',
+        settings: toInputJson(block.settings),
+        content: toInputJson(block.content),
+        sortOrder: block.sortOrder,
+        isActive: true,
+      })),
+    });
+
+    console.log('[seed] Home layout enriched with starter content');
+    break;
+  }
 }
 
 export async function seedDefaultHomeLayout(prisma: PrismaClient): Promise<void> {
@@ -626,12 +814,15 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
   await seedLegalPages(prisma);
   await seedStorefrontCmsPages(prisma);
   await seedDefaultMenus(prisma);
+  await seedDefaultMenuItems(prisma);
   await seedDefaultFooter(prisma);
   await seedDefaultFooterColumns(prisma);
   await seedDefaultTheme(prisma);
   await seedDefaultHeader(prisma);
   await seedDefaultHomeLayout(prisma);
+  await enrichStarterHomeLayout(prisma);
   await seedDemoCatalog(prisma);
+  await passivateDemoProducts(prisma);
   await seedDefaultShippingCarrier(prisma);
   await seedDefaultPaymentMethods(prisma);
   await seedDefaultContactForm(prisma);

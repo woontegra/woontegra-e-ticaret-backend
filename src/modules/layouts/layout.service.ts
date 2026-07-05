@@ -290,5 +290,5 @@ export async function getPublicHomeLayout() {
     return null;
   }
 
-  return toPublicHomeLayoutDto(layout, layout.blocks);
+  return await toPublicHomeLayoutDto(layout, layout.blocks);
 }

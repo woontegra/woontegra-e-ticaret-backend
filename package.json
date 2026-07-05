@@ -15,7 +15,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "import:legacy": "tsx src/scripts/import-legacy-website.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

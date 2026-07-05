@@ -3,6 +3,7 @@ import type {
   CartItem,
   Order,
   OrderItem,
+  PaymentTransaction,
   Prisma,
   Product,
   ProductVariant,
@@ -17,6 +18,7 @@ import type {
   OrderDto,
   OrderItemDto,
   OrderSummaryDto,
+  PaymentTransactionDto,
   PublicOrderDto,
 } from '../types/api.js';
 import { resolveMediaUrlMap } from './media-url.js';
@@ -37,7 +39,22 @@ type OrderWithItems = Order & {
   items: OrderItem[];
   shipment?: (Shipment & { carrier?: ShippingCarrier | null }) | null;
   paymentMethod?: PaymentMethod | null;
+  paymentTransactions?: PaymentTransaction[];
 };
+
+function toPaymentTransactionDto(tx: PaymentTransaction): PaymentTransactionDto {
+  return {
+    id: tx.id,
+    orderId: tx.orderId,
+    provider: tx.provider,
+    status: tx.status,
+    amount: decimalToNumber(tx.amount)!,
+    currency: tx.currency,
+    providerReference: tx.providerReference,
+    createdAt: tx.createdAt.toISOString(),
+    updatedAt: tx.updatedAt.toISOString(),
+  };
+}
 
 export function buildLineLabel(
   product: Product,
@@ -158,6 +175,7 @@ export function toOrderDto(order: OrderWithItems): OrderDto {
     paymentMethodName: order.paymentMethod?.name ?? null,
     shipment: order.shipment ? toShipmentDto(order.shipment) : null,
     items: order.items.map(toOrderItemDto),
+    paymentTransactions: order.paymentTransactions?.map(toPaymentTransactionDto),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   };

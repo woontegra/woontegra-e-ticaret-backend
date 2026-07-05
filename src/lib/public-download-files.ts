@@ -23,14 +23,14 @@ export function toPublicDownloadFiles(
   if (!config?.files?.length) return null;
 
   return {
-    version: config.version,
+    version: config.version ?? undefined,
     publicFreeDownload: config.publicFreeDownload,
     files: config.files.map((file) => ({
       label: file.label,
-      type: file.type,
-      buttonLabel: file.buttonLabel,
-      version: file.version,
-      size: file.size,
+      type: file.type ?? undefined,
+      buttonLabel: file.buttonLabel ?? undefined,
+      version: file.version ?? undefined,
+      size: file.size ?? undefined,
       available: Boolean(file.mediaAssetId?.trim()),
     })),
   };

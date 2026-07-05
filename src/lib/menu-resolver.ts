@@ -53,7 +53,7 @@ export async function resolveMenuItemHref(
       });
       if (!product) return null;
       return product.productKind === 'SOFTWARE'
-        ? `/yazilim/${product.slug}`
+        ? `/yazilimlar/${product.slug}`
         : `/urun/${product.slug}`;
     }
 

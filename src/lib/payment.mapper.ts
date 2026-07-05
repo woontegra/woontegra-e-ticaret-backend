@@ -24,7 +24,7 @@ export const DEFAULT_PAYMENT_METHODS: Array<{
   {
     type: 'PAYTR',
     name: 'PayTR',
-    config: { merchantId: '', merchantKey: '', merchantSalt: '' },
+    config: { merchantId: '', merchantKey: '', merchantSalt: '', successUrl: null, failUrl: null, callbackUrl: null },
   },
   {
     type: 'IYZICO',
@@ -49,6 +49,9 @@ function maskPaytrConfig(config: Record<string, unknown>) {
     merchantSalt: '',
     hasMerchantKey: Boolean(config.merchantKey),
     hasMerchantSalt: Boolean(config.merchantSalt),
+    successUrl: typeof config.successUrl === 'string' ? config.successUrl : null,
+    failUrl: typeof config.failUrl === 'string' ? config.failUrl : null,
+    callbackUrl: typeof config.callbackUrl === 'string' ? config.callbackUrl : null,
   };
 }
 
@@ -108,6 +111,18 @@ export function mergePaymentMethodConfig(
           typeof next.merchantSalt === 'string' && next.merchantSalt.trim()
             ? next.merchantSalt
             : String(current.merchantSalt ?? ''),
+        successUrl:
+          typeof next.successUrl === 'string'
+            ? next.successUrl || null
+            : (current.successUrl as string | null | undefined) ?? null,
+        failUrl:
+          typeof next.failUrl === 'string'
+            ? next.failUrl || null
+            : (current.failUrl as string | null | undefined) ?? null,
+        callbackUrl:
+          typeof next.callbackUrl === 'string'
+            ? next.callbackUrl || null
+            : (current.callbackUrl as string | null | undefined) ?? null,
       };
       return merged;
     }

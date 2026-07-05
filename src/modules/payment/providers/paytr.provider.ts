@@ -1,6 +1,7 @@
 import { BasePaymentProvider } from './base.provider.js';
 import type { PaymentInitResult } from '../payment.types.js';
 import type { PaymentProviderContext } from './base.provider.js';
+import { startPaytrPayment } from '../paytr.service.js';
 
 export class PaytrProvider extends BasePaymentProvider {
   readonly provider = 'PAYTR' as const;
@@ -20,13 +21,17 @@ export class PaytrProvider extends BasePaymentProvider {
       merchantSalt: config.merchantSalt,
     });
 
-    // PayTR entegrasyonu: token oluşturma ve yönlendirme URL'si burada üretilecek.
+    const result = await startPaytrPayment({
+      orderNumber: context.order.orderNumber,
+      clientIp: context.clientIp ?? '127.0.0.1',
+    });
+
     return {
       kind: 'redirect',
-      redirectUrl: null,
-      message:
-        'PayTR ödeme entegrasyonu iskeleti hazır. Token üretimi sonraki adımda eklenecek.',
-      providerReference: null,
+      redirectUrl: result.redirectUrl,
+      iframeToken: result.iframeToken,
+      message: null,
+      providerReference: result.merchantOid,
     };
   }
 }
@@ -48,7 +53,6 @@ export class IyzicoProvider extends BasePaymentProvider {
       secretKey: config.secretKey,
     });
 
-    // Iyzico entegrasyonu: checkout form initialize burada yapılacak.
     return {
       kind: 'redirect',
       redirectUrl: null,

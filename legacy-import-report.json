@@ -1,0 +1,161 @@
+{
+  "importedAt": "2026-07-05T22:09:47.473Z",
+  "source": "C:\\Users\\Woontegra\\Desktop\\Woontegra E-ticaret\\legacy-reference\\old-website\\export\\legacy-snapshot.json",
+  "products": {
+    "imported": [],
+    "updated": [
+      "sifre-kasasi",
+      "muvekkil-kasa-defteri-yazilimi",
+      "muvekkil-kasa-defteri-web-tabanli",
+      "muvekkil-kasa-defteri-saas"
+    ],
+    "skipped": [],
+    "weakDescription": [],
+    "missingImage": [
+      "sifre-kasasi",
+      "muvekkil-kasa-defteri-yazilimi",
+      "muvekkil-kasa-defteri-web-tabanli",
+      "muvekkil-kasa-defteri-saas"
+    ],
+    "missingLicenseAppCode": [],
+    "missingDownloadFiles": [
+      "muvekkil-kasa-defteri-yazilimi"
+    ],
+    "missingSeo": [
+      "muvekkil-kasa-defteri-saas"
+    ],
+    "r2MappingNeeded": [
+      "sifre-kasasi: Kurulum Sürümü (woontegra-sifre-kasasi-setup-1.0.0.exe)",
+      "sifre-kasasi: Portable Sürüm (woontegra-sifre-kasasi-portable-1.0.0.exe)"
+    ]
+  },
+  "blog": {
+    "imported": [],
+    "updated": [
+      "dijital-donusum-rehberi",
+      "saas-urun-gelistirme-rehberi",
+      "e-ticaret-optimizasyonu",
+      "marka-tescil-sureci",
+      "modern-web-teknolojileri",
+      "dijital-pazarlama-stratejileri",
+      "api-tasarimi-best-practices",
+      "taslak-icerik-yonetimi-rehberi"
+    ],
+    "under500Words": [
+      "dijital-donusum-rehberi (9 words)",
+      "saas-urun-gelistirme-rehberi (10 words)",
+      "e-ticaret-optimizasyonu (6 words)",
+      "marka-tescil-sureci (8 words)",
+      "modern-web-teknolojileri (7 words)",
+      "dijital-pazarlama-stratejileri (6 words)",
+      "api-tasarimi-best-practices (6 words)",
+      "taslak-icerik-yonetimi-rehberi (9 words)"
+    ],
+    "missingCover": [
+      "dijital-donusum-rehberi",
+      "saas-urun-gelistirme-rehberi",
+      "e-ticaret-optimizasyonu",
+      "marka-tescil-sureci",
+      "modern-web-teknolojileri",
+      "dijital-pazarlama-stratejileri",
+      "api-tasarimi-best-practices",
+      "taslak-icerik-yonetimi-rehberi"
+    ],
+    "missingSeoDescription": [
+      "dijital-donusum-rehberi",
+      "saas-urun-gelistirme-rehberi",
+      "e-ticaret-optimizasyonu",
+      "marka-tescil-sureci",
+      "modern-web-teknolojileri",
+      "dijital-pazarlama-stratejileri",
+      "api-tasarimi-best-practices",
+      "taslak-icerik-yonetimi-rehberi"
+    ],
+    "weakContent": [
+      "dijital-donusum-rehberi",
+      "saas-urun-gelistirme-rehberi",
+      "e-ticaret-optimizasyonu",
+      "marka-tescil-sureci",
+      "modern-web-teknolojileri",
+      "dijital-pazarlama-stratejileri",
+      "api-tasarimi-best-practices",
+      "taslak-icerik-yonetimi-rehberi"
+    ]
+  },
+  "pages": {
+    "imported": [],
+    "updated": [
+      "hakkimizda",
+      "iletisim",
+      "gizlilik-politikasi",
+      "kvkk-aydinlatma-metni",
+      "cerez-politikasi"
+    ],
+    "missingSeo": [
+      "gizlilik-politikasi",
+      "kvkk-aydinlatma-metni",
+      "cerez-politikasi"
+    ],
+    "missingContent": [
+      "hakkimizda",
+      "iletisim",
+      "gizlilik-politikasi",
+      "kvkk-aydinlatma-metni",
+      "cerez-politikasi"
+    ]
+  },
+  "media": {
+    "blobLinked": [],
+    "r2Linked": [],
+    "localPathNeedsManualUpload": [
+      "product:sifre-kasasi: /images/woontegra-sifre-kasasi-ekran.png",
+      "product:muvekkil-kasa-defteri-yazilimi: /images/products/mk-desktop.png",
+      "product:muvekkil-kasa-defteri-web-tabanli: /images/products/mk-web.png",
+      "blog:dijital-donusum-rehberi: /images/blog/hero-dashboard.jpg",
+      "blog:saas-urun-gelistirme-rehberi: /images/blog/hero-dashboard.jpg",
+      "blog:e-ticaret-optimizasyonu: /images/blog/e-ticaret.jpeg",
+      "blog:marka-tescil-sureci: /images/blog/hero-dashboard.jpg",
+      "blog:modern-web-teknolojileri: /images/blog/hero-dashboard.jpg",
+      "blog:dijital-pazarlama-stratejileri: /images/blog/hero-dashboard.jpg",
+      "blog:api-tasarimi-best-practices: /images/blog/hero-dashboard.jpg",
+      "blog:taslak-icerik-yonetimi-rehberi: /images/blog/hero-dashboard.jpg"
+    ]
+  },
+  "redirects": {
+    "imported": [],
+    "updated": [
+      "/yazilim/:slug",
+      "/e-ticaret-altyapisi",
+      "/web-tasarim",
+      "/ozel-yazilim",
+      "/hizmetler/e-ticaret-cozumleri",
+      "/hizmetler/saas-urun-gelistirme",
+      "/yazilimlar/muvekkil-kasa-defteri-saas"
+    ]
+  },
+  "preservedSlugs": {
+    "products": [
+      "sifre-kasasi",
+      "muvekkil-kasa-defteri-yazilimi",
+      "muvekkil-kasa-defteri-web-tabanli",
+      "muvekkil-kasa-defteri-saas"
+    ],
+    "blog": [
+      "dijital-donusum-rehberi",
+      "saas-urun-gelistirme-rehberi",
+      "e-ticaret-optimizasyonu",
+      "marka-tescil-sureci",
+      "modern-web-teknolojileri",
+      "dijital-pazarlama-stratejileri",
+      "api-tasarimi-best-practices",
+      "taslak-icerik-yonetimi-rehberi"
+    ],
+    "pages": [
+      "hakkimizda",
+      "iletisim",
+      "gizlilik-politikasi",
+      "kvkk-aydinlatma-metni",
+      "cerez-politikasi"
+    ]
+  }
+}

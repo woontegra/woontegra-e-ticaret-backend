@@ -9,6 +9,7 @@ import { toOrderDto, toOrderSummaryDto } from '../../lib/order.mapper.js';
 import { prisma } from '../../lib/prisma.js';
 import { sendOrderDigitalDeliveryEmail, sendPaymentReceivedEmail, sendSaasProvisionReadyEmail } from '../mail/mail-order.service.js';
 import { maybeNotifyPaymentWaiting } from '../notifications/notification.service.js';
+import { recordBankTransferPayment } from '../payment/payment-provider.service.js';
 import {
   getAdminOrderDigitalDelivery,
   onOrderPaymentCompleted,
@@ -89,6 +90,7 @@ async function loadOrderDto(id: string) {
       items: true,
       paymentMethod: true,
       shipment: { include: { carrier: true } },
+      paymentTransactions: { orderBy: { createdAt: 'desc' } },
     },
   });
   if (!order) throw AppError.notFound('Order not found');
@@ -173,6 +175,9 @@ export async function updateOrderPaymentStatus(
     paymentStatus === PaymentStatus.PAID &&
     previousStatus !== PaymentStatus.PAID
   ) {
+    if (previousStatus === PaymentStatus.WAITING_BANK_TRANSFER) {
+      await recordBankTransferPayment(id);
+    }
     void sendPaymentReceivedEmail(order).catch((error) => {
       console.error('[mail] PAYMENT_RECEIVED failed', error);
     });

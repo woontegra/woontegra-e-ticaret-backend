@@ -10,8 +10,8 @@ export const DEFAULT_HEADER_SETTINGS: Omit<
 > = {
   logoPosition: 'LEFT',
   menuPosition: 'CENTER',
-  headerHeight: '3.5rem',
-  stickyHeader: false,
+  headerHeight: '4rem',
+  stickyHeader: true,
   showSearch: true,
   showAccountIcon: true,
   showFavoritesIcon: false,
@@ -23,9 +23,9 @@ export const DEFAULT_HEADER_SETTINGS: Omit<
   announcementEnabled: false,
   announcementText: null,
   announcementLink: null,
-  accountUrl: null,
-  searchPlaceholder: null,
-  cartUrl: null,
+  accountUrl: '/giris',
+  searchPlaceholder: 'Ürün veya yazılım ara…',
+  cartUrl: '/sepet',
   favoritesUrl: null,
 };
 

@@ -52,6 +52,7 @@ export async function checkout(
   sessionId: string,
   input: CheckoutInput,
   storeCustomerId?: string | null,
+  clientIp?: string,
 ): Promise<CheckoutResultDto> {
   const paymentMethod = await validatePaymentMethodForCheckout(
     input.paymentMethodId,
@@ -173,6 +174,7 @@ export async function checkout(
       order,
       method: paymentMethod,
       isTestMode: paymentMethod.isTestMode,
+      clientIp: clientIp ?? '127.0.0.1',
     });
     redirectUrl = initResult?.redirectUrl ?? null;
     message = initResult?.message ?? null;

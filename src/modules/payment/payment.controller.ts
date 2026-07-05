@@ -1,8 +1,11 @@
 import type { Request, Response } from 'express';
-import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
-import { sendSuccess } from '../../lib/response.js';
-import { updatePaymentMethodSchema } from './payment.schema.js';
+import { getClientIp } from '../../lib/client-ip.js';
+import { AppError } from '../../lib/app-error.js';
+import { sendCreated, sendSuccess } from '../../lib/response.js';
+import { updatePaymentMethodSchema, paytrStartSchema } from './payment.schema.js';
 import * as paymentMethodService from './payment-method.service.js';
+import { handlePaytrCallback, startPaytrPayment } from './paytr.service.js';
+import { AUDIT_ACTIONS, auditFromRequest } from '../../lib/audit.js';
 
 export async function listPaymentMethods(_req: Request, res: Response) {
   const data = await paymentMethodService.listPaymentMethods();
@@ -35,4 +38,31 @@ export async function updatePaymentMethod(req: Request, res: Response) {
 export async function listPublicPaymentMethods(_req: Request, res: Response) {
   const data = await paymentMethodService.listPublicPaymentMethods();
   sendSuccess(res, data);
+}
+
+export async function startPaytrPaymentHandler(req: Request, res: Response) {
+  const input = paytrStartSchema.parse(req.body);
+  const data = await startPaytrPayment({
+    orderNumber: input.orderNumber,
+    customerEmail: input.email,
+    clientIp: getClientIp(req),
+  });
+  sendCreated(res, data);
+}
+
+export async function paytrCallbackHandler(req: Request, res: Response) {
+  const raw = req.body as Record<string, unknown>;
+  const payload: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    payload[key] = value === undefined || value === null ? '' : String(value);
+  }
+
+  try {
+    await handlePaytrCallback(payload);
+    res.type('text/plain').send('OK');
+  } catch (error) {
+    const status = error instanceof AppError ? error.statusCode : 500;
+    const message = error instanceof AppError ? error.message : 'Hata';
+    res.status(status).type('text/plain').send(message);
+  }
 }

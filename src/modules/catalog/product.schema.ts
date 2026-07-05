@@ -13,6 +13,22 @@ const slugSchema = z
 
 const optionalMediaId = z.string().min(1).nullable().optional();
 
+const emptyToNull = (value: unknown) => {
+  if (value === '' || value === 0) return null;
+  if (typeof value === 'number' && Number.isNaN(value)) return null;
+  return value;
+};
+
+const nullablePositiveInt = z.preprocess(
+  emptyToNull,
+  z.number().int().positive().nullable().optional(),
+);
+
+const nullableNonNegativeInt = z.preprocess(
+  emptyToNull,
+  z.number().int().nonnegative().nullable().optional(),
+);
+
 const productFieldsSchema = z.object({
   name: z.string().min(1).max(200),
   slug: slugSchema.optional(),
@@ -22,18 +38,24 @@ const productFieldsSchema = z.object({
   deliveryMode: z.nativeEnum(DeliveryMode).optional(),
   purchaseEnabled: z.boolean().optional(),
   currency: z.string().max(8).optional(),
-  compareAtPrice: z.number().nonnegative().nullable().optional(),
+  compareAtPrice: z.preprocess(
+    emptyToNull,
+    z.number().nonnegative().nullable().optional(),
+  ),
   version: z.string().max(50).nullable().optional(),
-  featureBullets: z.array(z.string().max(200)).optional(),
+  featureBullets: z
+    .array(z.string().max(200))
+    .optional()
+    .transform((items) => items?.filter((item) => item.trim()) ?? items),
   sortOrder: z.number().int().optional(),
   licenseRequired: z.boolean().optional(),
   licenseAppCode: z.string().max(80).nullable().optional(),
-  licenseDays: z.number().int().positive().nullable().optional(),
-  licenseMonths: z.number().int().positive().nullable().optional(),
-  licenseMaxDevices: z.number().int().positive().nullable().optional(),
+  licenseDays: nullablePositiveInt,
+  licenseMonths: nullablePositiveInt,
+  licenseMaxDevices: nullablePositiveInt,
   saasAppCode: z.string().max(80).nullable().optional(),
   saasPlanCode: z.string().max(80).nullable().optional(),
-  saasTrialDays: z.number().int().nonnegative().nullable().optional(),
+  saasTrialDays: nullableNonNegativeInt,
   saasRequiresLogin: z.boolean().optional(),
   downloadFiles: productDownloadFilesSchema,
   shortDescription: z.string().max(500).nullable().optional(),
@@ -44,9 +66,18 @@ const productFieldsSchema = z.object({
   categoryId: z.string().nullable().optional(),
   brandId: z.string().nullable().optional(),
   status: z.nativeEnum(ProductStatus).optional(),
-  basePrice: z.number().nonnegative().nullable().optional(),
-  salePrice: z.number().nonnegative().nullable().optional(),
-  taxRate: z.number().min(0).max(100).nullable().optional(),
+  basePrice: z.preprocess(
+    emptyToNull,
+    z.number().nonnegative().nullable().optional(),
+  ),
+  salePrice: z.preprocess(
+    emptyToNull,
+    z.number().nonnegative().nullable().optional(),
+  ),
+  taxRate: z.preprocess(
+    emptyToNull,
+    z.number().min(0).max(100).nullable().optional(),
+  ),
   stockTrackingEnabled: z.boolean().optional(),
   stockQuantity: z.number().int().nullable().optional(),
   lowStockThreshold: z.number().int().nullable().optional(),
